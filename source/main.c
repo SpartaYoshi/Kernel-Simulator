@@ -3,16 +3,20 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "definitions.h"
+/**
+#include "../include/definitions.h"
+**/
 
 
 int main(int argc, char *argv[]) {
-	extern int nth;
+	int nth = 0;
 
 	printf("Indicate number of threads: ");
-	scanf("%d", &nth);
+	if(scanf("%d", &nth) == 1){};
 
 	//for (int i = 0; i < nth; i++)
 		//pthread_create(newthread, const pthread_attr_t *restrict attr, void *(*start_routine)(void *), void *restrict arg)
+
+	exit(0);
 
 }
