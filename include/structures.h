@@ -16,7 +16,6 @@ typedef struct {
 
 
 
-
 // Core
 typedef struct {
 		pthread_t *threads;

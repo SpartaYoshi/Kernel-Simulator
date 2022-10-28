@@ -3,14 +3,16 @@ BUILD		:=	build
 SRCDIR		:=	source
 INCLDIR	    :=	include
 
+
 export INCLUDE	:=	$(foreach dir,$(INCLDIR),-I$(CURDIR)/$(dir)) # -I$(CURDIR)/$(BUILD)
 export SOURCE   :=  $(foreach dir,$(SRCDIR),$(wildcard $(dir)/*))
 
-CFLAGS	:=	-g -Wall -O2 $(INCLUDE)
+CFLAGS	:=	-g -Wall -O1 $(INCLUDE)
 
-$(BUILD) : $(SOURCE)
+$(BUILD): $(SOURCE)
 	[ -d $@ ] || mkdir -p $@
-	gcc $(CFLAGS) -c $^ -o $(patsubst %.c,$(BUILD)/%.o,$(notdir $(SOURCE)))
+	$(foreach srcfile,$(SOURCE),gcc $(CFLAGS) -c $(srcfile) -o $(patsubst %.c,$(BUILD)/%.o,$(notdir $(srcfile)) ;))
+#	gcc $(CFLAGS) -c $^ -o $(patsubst %.c,$(BUILD)/%.o,$(notdir $(SOURCE)))
 
 
 kernel:
