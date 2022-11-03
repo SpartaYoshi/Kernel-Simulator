@@ -1,6 +1,4 @@
 #include <pthread.h>
 
-extern unsigned int clock_tick;
-extern pthread_mutex_t clock_mtx;
-
+extern unsigned int runtime_tick;
 void kclock();
