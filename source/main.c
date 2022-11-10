@@ -58,6 +58,11 @@ int main(int argc, char *argv[]) {
 	pthread_mutex_init(&procgen_mtx, NULL);
 	pthread_cond_init(&tickwork_cnd, NULL);
 	pthread_cond_init(&pending_cnd, NULL);
+	pthread_cond_init(&sched_run_cnd, NULL);
+	pthread_cond_init(&sched_exit_cnd, NULL);
+	pthread_cond_init(&procgen_run_cnd, NULL);
+	pthread_cond_init(&procgen_exit_cnd, NULL);
+
 
 	// Hardware initialization
 	pthread_t clock_o;
@@ -79,11 +84,18 @@ int main(int argc, char *argv[]) {
 	while (getch() != KEY_SPC);
 
 	kernel_start = 1;
+	
+	char c;
+	while ((c = getch()) != 'q' && c != KEY_ESC)
+		printf("buenos dias \n");
+	/**
 	while (1) {
+		
 		char c = getch();
 		if (c == 'q' || c == KEY_ESC) 
 			break;
 	}
+	**/
 
 	// Hardware shutdown
 	shutdown_machine();
@@ -93,12 +105,18 @@ int main(int argc, char *argv[]) {
 	pthread_join(sched_o, NULL);
 	pthread_join(procgen_o, NULL);
 
+
 	// Mutex and conditionals cleanup
 	pthread_mutex_destroy(&clock_mtx);
 	pthread_mutex_destroy(&sched_mtx);
 	pthread_mutex_destroy(&procgen_mtx);
 	pthread_cond_destroy(&tickwork_cnd);
 	pthread_cond_destroy(&pending_cnd);
+	pthread_cond_destroy(&sched_run_cnd);
+	pthread_cond_destroy(&sched_exit_cnd);
+	pthread_cond_destroy(&procgen_run_cnd);
+	pthread_cond_destroy(&procgen_exit_cnd);
+
 
 	exit(0);
 }

@@ -8,6 +8,8 @@
 #include "../include/ansi.h"
 
 pthread_mutex_t sched_mtx;
+pthread_cond_t sched_run_cnd;
+pthread_cond_t sched_exit_cnd;
 
 // Timer for scheduler
 void timer_sched() {
@@ -18,6 +20,7 @@ void timer_sched() {
 	while(!kernel_start);
 
 	pthread_mutex_lock(&clock_mtx);
+	pthread_mutex_lock(&sched_mtx);
 	while (1) {		
 		timers_done++;
 
@@ -25,9 +28,9 @@ void timer_sched() {
 			current_tick++;
 		current_tick = 0;
 
-		pthread_mutex_unlock(&sched_mtx); 
-		// scheduler iteration
-		pthread_mutex_lock(&sched_mtx);
+		// Here, the scheduler takes action and the timer waits for it to finish
+		pthread_cond_signal(&sched_run_cnd);
+		pthread_cond_wait(&sched_exit_cnd, &sched_mtx); 
 
 		pthread_cond_signal(&tickwork_cnd);
 		pthread_cond_wait(&pending_cnd, &clock_mtx);	
@@ -41,8 +44,8 @@ void kscheduler() {
 	while(!kernel_start);
 
 	while(1) {
-		pthread_mutex_lock(&sched_mtx);
+		pthread_cond_wait(&sched_run_cnd, &sched_mtx);
 		printf(" >> Scheduler tickeado :), %d\n", runtime_tick);
-		pthread_mutex_unlock(&sched_mtx);
+		pthread_cond_signal(&sched_exit_cnd);
 	}
 }
