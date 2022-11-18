@@ -5,4 +5,4 @@ extern pthread_cond_t sched_run_cnd;
 extern pthread_cond_t sched_exit_cnd;
 
 void timer_sched();
-void kscheduler();
+void ksched_disp();

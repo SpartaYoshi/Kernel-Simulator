@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 	pthread_t timer_procgen_o;
 	pthread_create(&timer_procgen_o, NULL, (void *) timer_procgen, NULL);
 	pthread_t sched_o;
-	pthread_create(&sched_o, NULL, (void *) kscheduler, NULL);
+	pthread_create(&sched_o, NULL, (void *) ksched_disp, NULL);
 	pthread_t procgen_o;
 	pthread_create(&procgen_o, NULL, (void *) kprocgen, NULL);
 
@@ -86,8 +86,8 @@ int main(int argc, char *argv[]) {
 	kernel_start = 1;
 	
 	char c;
-	while ((c = getch()) != 'q' && c != KEY_ESC)
-		printf("buenos dias \n");
+	while ((c = getch()) != 'q' && c != KEY_ESC);
+	
 	/**
 	while (1) {
 		

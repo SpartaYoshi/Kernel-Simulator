@@ -11,7 +11,8 @@
 #include "../include/ansi.h"
 
 // Declaration
-machine_t mach;
+machine_t      mach;
+thread_stack_t thstack;
 
 void init_core_thread(core_t* core, thread_t* thread, void* start_routine, char* proc_name);
 
@@ -37,6 +38,10 @@ void init_machine() {
 		mach.cpu[i] = icpu;
 	}
 	mach.is_running = MACH_ON;
+	
+	// Init stack pointer
+	thstack.sp = thstack.stack;
+	thstack.size = 0;
 }
 
 void shutdown_machine() {
@@ -79,4 +84,25 @@ thread_t* find_thread(core_t* core, char* proc_name) {
 			break;
 		}
 	return thread;
+}
+
+
+
+// Quantum subtraction for all processes
+void subtract_quantum() {
+	for (int i = 0; i < ncpu; i++) {
+		for (int j = 0; j < ncores; j++){
+			core_t* jcore = &mach.cpu[i].core[j];
+			for (int k = 0; k < jcore->thread_count; k++) {
+				pcb_t* process_block = jcore->thread[k].proc;
+				if (process_block->state == PRSTAT_RUNNING) {
+					process_block->quantum--;
+					if(!process_block->quantum) {
+						push(*thstack.sp, jcore->thread[k]);
+						thstack.size++;
+					}
+				}
+			}
+		}
+	}
 }

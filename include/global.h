@@ -2,12 +2,21 @@
 #include <sys/types.h>
 
 // Constants
-#define NTIMERS 2
-#define MAX_THREADS 32
+#define NTIMERS  2
+#define NQUEUES  5
+#define MAX_THREADS    32
 #define QUEUE_CAPACITY 16
 
-#define MACH_OFF 0
-#define MACH_ON 1
+#define MACH_OFF   0
+#define MACH_ON    1
+
+#define PRSTAT_IDLE 	 0
+#define PRSTAT_RUNNING   1
+#define PRSTAT_FINISHED  2
+
+// Macros (for thread stack)
+#define push(sp, n) (*((sp)++) = (n))
+#define pop(sp)     (*--(sp))
 
 // Parameters
 extern unsigned int ncores;
@@ -17,33 +26,53 @@ extern unsigned int freq;	// clock tick by hardware frequency
 // Flag
 extern int kernel_start;
 
+
 ///////////////////////////////////
 // Stuctures //
 
-// Process Control Block
+// Translation Lookaside Buffer (TLB)
+typedef struct {
+	unsigned int virtual_adr;
+	unsigned int physical_adr;
+} tlb_t;
+
+// Context for PCB
+typedef struct {
+	unsigned int PC; 	// Virtual address of IR
+	//char* IR;		 	// Last instruction executed
+	//tlb_t tlb;
+} pcb_context_t;
+
+// Process Control Block (PCB)
 typedef struct _pcb { 
 	struct _pcb * next;
-	pid_t pid;
+	pid_t         pid;
+	int           state;
+	int           priority;
+	pcb_context_t context;
+	unsigned int  quantum;
 	// [...]
 } pcb_t;
 
 // Process Queue
 typedef struct {
-	pcb_t* process[QUEUE_CAPACITY];
+	int   front, rear, size; 
+	pcb_t queue[QUEUE_CAPACITY]; 
 } process_queue_t;
 
 // Thread
 typedef struct {
-	pthread_t handle;
-	pcb_t* proc;
-	char proc_name[128];
+	pthread_t    handle;
+	pcb_t*       proc;
+	char         proc_name[128];
+	unsigned int PC;
 } thread_t;
 
 // Core
 typedef struct {
-	int cid;
+	int      cid;
 	thread_t thread[MAX_THREADS];
-	int thread_count;
+	int      thread_count;
 } core_t;
 
 // CPU
@@ -54,5 +83,13 @@ typedef struct {
 // Machine
 typedef struct {
 	cpu_t* cpu;
-	int is_running;
+	int    is_running;
 } machine_t;
+
+// Thread stack
+typedef struct {
+	thread_t*  stack[NQUEUES * QUEUE_CAPACITY];
+	thread_t** sp;
+	int        size;
+}thread_stack_t;
+
