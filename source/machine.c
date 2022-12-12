@@ -88,7 +88,7 @@ thread_t* find_thread(core_t* core, char* proc_name) {
 
 
 
-// Quantum subtraction for all processes
+// Quantum subtraction for all processes + compile processed threads into stack
 void subtract_quantum() {
 	for (int i = 0; i < ncpu; i++) {
 		for (int j = 0; j < ncores; j++){

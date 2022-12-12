@@ -15,6 +15,7 @@ thread_t* thread_selected;
 pcb_t* schedule();
 void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb);
 
+
 // Timer for scheduler
 void timer_sched() {
 	printf("%sInitiated:%s Timer for scheduler\n", C_BCYN, C_RESET);
@@ -29,11 +30,12 @@ void timer_sched() {
 		timers_done++;
 
 		// Wait (force scheduler to take longer time)
-		while (current_tick < 100*freq)	// Example: multiplication depending on frequency, it takes longer or shorter time
+		/*   Example: multiplication depending on frequency, it takes longer or shorter time */
+		while (current_tick < 100*freq)	
 			current_tick++;
 		current_tick = 0;
 
-		subtract_quantum(); 			// quantum--; for all processes + compile stack
+		subtract_quantum(); // quantum--; for all processes + compile stack
 
 		while(thstack.size) {
 			// Pop from stack
@@ -64,7 +66,6 @@ void ksched_disp() {
 		pcb_t* replacement_pcb = schedule();
 		if (replacement_pcb->pid != current_pcb->pid)
 			dispatch(thread_selected, current_pcb, replacement_pcb);
-
 
 		pthread_cond_signal(&sched_exit_cnd);
 	}
