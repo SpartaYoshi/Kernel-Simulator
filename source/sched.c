@@ -12,6 +12,8 @@ pthread_cond_t sched_run_cnd;
 pthread_cond_t sched_exit_cnd;
 thread_t* thread_selected;
 
+process_queue_t idle_queue = {-1, -1, 0};
+
 pcb_t* schedule();
 void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb);
 
@@ -35,7 +37,7 @@ void timer_sched() {
 			current_tick++;
 		current_tick = 0;
 
-		subtract_quantum(); // quantum--; for all processes + compile stack
+		quantum_compiler(); // quantum--; for all processes + compile stack of all running processes with 0 quantum
 
 		while(thstack.size) {
 			// Pop from stack
@@ -53,12 +55,18 @@ void timer_sched() {
 	}
 }
 
-// Scheduler/Dispatcher (thread execution)
+
+// Scheduler/Dispatcher (main executor)
 void ksched_disp() {
 	printf("%sInitiated:%s Scheduler/Dispatcher\n", C_BCYN, C_RESET);
 
 	while(!kernel_start);
+	
+	// Initialize idle process queue
+	for(int i = 0; i < QUEUE_CAPACITY; i++)
+		idle_queue.q[i] = (pcb_t*) &nullp;
 
+	// Start scheduler-dispatcher
 	while(1) {
 		pthread_cond_wait(&sched_run_cnd, &sched_mtx);
 
@@ -92,7 +100,18 @@ void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 }
 
 
+// Compare priorities to sort from biggest to smallest
+int priocmp(const void* a, const void* b) {
+	pcb_t* ap = (pcb_t*) a;
+	pcb_t* bp = (pcb_t*) b;
+	return -(ap->priority - bp->priority);
+}
+
+
 // Scheduling function
 pcb_t* schedule() {
+	// Sort queue by priority
+	qsort(&idle_queue, QUEUE_CAPACITY, sizeof(pcb_t), *priocmp);
 	return NULL;
 }
+

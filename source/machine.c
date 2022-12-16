@@ -89,18 +89,17 @@ thread_t* find_thread(core_t* core, char* proc_name) {
 
 
 // Quantum subtraction for all processes + compile processed threads into stack
-void subtract_quantum() {
+void quantum_compiler() {
 	for (int i = 0; i < ncpu; i++) {
 		for (int j = 0; j < ncores; j++){
 			core_t* jcore = &mach.cpu[i].core[j];
 			for (int k = 0; k < jcore->thread_count; k++) {
 				pcb_t* process_block = jcore->thread[k].proc;
-				if (process_block->state == PRSTAT_RUNNING) {
+				if (process_block->state == PRSTAT_RUNNING && process_block->quantum > 0)
 					process_block->quantum--;
-					if(!process_block->quantum) {
-						push(*thstack.sp, jcore->thread[k]);
-						thstack.size++;
-					}
+				if(!process_block->quantum) {
+					push(*thstack.sp, jcore->thread[k]);
+					thstack.size++;
 				}
 			}
 		}

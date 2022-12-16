@@ -1,10 +1,15 @@
 #include <pthread.h>
 #include <sys/types.h>
 
+
+//////////////////
+// Declarations //
+//////////////////
+
 // Constants
 #define NTIMERS  2
-#define NQUEUES  5
 #define MAX_THREADS    32
+#
 #define QUEUE_CAPACITY 16
 
 #define MACH_OFF   0
@@ -27,8 +32,9 @@ extern unsigned int freq;	// clock tick by hardware frequency
 extern int kernel_start;
 
 
-///////////////////////////////////
+///////////////
 // Stuctures //
+///////////////
 
 // Translation Lookaside Buffer (TLB)
 typedef struct {
@@ -38,7 +44,7 @@ typedef struct {
 
 // Context for PCB
 typedef struct {
-	unsigned int PC; 	// Virtual address of IR
+	unsigned int PC; 	// Virtual address of next instruction
 	//char* IR;		 	// Last instruction executed
 	//tlb_t tlb;
 } pcb_context_t;
@@ -56,8 +62,8 @@ typedef struct _pcb {
 
 // Process Queue
 typedef struct {
-	int   front, rear, size; 
-	pcb_t queue[QUEUE_CAPACITY]; 
+	int    front, rear, size; 
+	pcb_t* q[QUEUE_CAPACITY]; 
 } process_queue_t;
 
 // Thread
@@ -88,8 +94,17 @@ typedef struct {
 
 // Thread stack
 typedef struct {
-	thread_t*  stack[NQUEUES * QUEUE_CAPACITY];
+	thread_t*  stack[QUEUE_CAPACITY];
 	thread_t** sp;
 	int        size;
 }thread_stack_t;
+
+
+////////////////////////////
+// Structure declarations // 
+////////////////////////////
+
+const pcb_t nullp = {NULL, -1, PRSTAT_IDLE, 140, 0, 0};
+
+extern process_queue_t idle_queue; // Queue of waiting processes
 

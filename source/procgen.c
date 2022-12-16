@@ -7,9 +7,14 @@
 #include "../include/clock.h"
 #include "../include/ansi.h"
 
+
 pthread_mutex_t procgen_mtx;
 pthread_cond_t procgen_run_cnd;
 pthread_cond_t procgen_exit_cnd;
+
+pcb_t* head = NULL;
+int generated = 0;
+
 
 // Timer for process generator
 void timer_procgen() {
@@ -24,7 +29,7 @@ void timer_procgen() {
 	while (1) {		
 		timers_done++;
 
-		while (current_tick < 100*freq)	// Example: multiplication depending on frequency, it takes longer or shorter time
+		while (current_tick < 10000*freq)	// Example: multiplication depending on frequency, it takes longer or shorter time
 			current_tick++;
 		current_tick = 0;
 
@@ -43,10 +48,26 @@ void kprocgen() {
 	printf("%sInitiated:%s Process generator\n", C_BCYN, C_RESET);
 
 	while(!kernel_start);
-
 	while(1) {
 		pthread_cond_wait(&procgen_run_cnd, &procgen_mtx);
-		printf(" >> Generador de procesos tickeado :), %d\n", runtime_tick);
+		
+		if (generated < MAX_THREADS) {
+			// Create process block
+			pcb_t* block = malloc(sizeof(pcb_t));
+			block->pid = ++generated;
+			block->state = PRSTAT_IDLE;
+			block->priority = 20;
+			block->context.PC = 0; // TODO: TBA
+			block->quantum = 40;
+
+			// Link to dynamic list of processes
+			block->next = head;
+			head = block;
+
+			// Add to idle queue
+			
+		}
+		
 		pthread_cond_signal(&procgen_exit_cnd);
 	}
 }
