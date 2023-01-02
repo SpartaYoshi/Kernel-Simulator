@@ -5,10 +5,11 @@
 #include <termios.h>
 #include <string.h>
 
+#include "../include/global.h"
 #include "../include/clock.h"
 #include "../include/sched.h"
 #include "../include/procgen.h"
-#include "../include/machine.h" // includes "global.h"
+#include "../include/machine.h"
 #include "../include/ansi.h"
 
 #define KEY_ESC 0x001b

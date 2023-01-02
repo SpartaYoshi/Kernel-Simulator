@@ -1,3 +1,6 @@
+#ifndef GLOBAL_H
+#define GLOBAL_H
+
 #include <pthread.h>
 #include <sys/types.h>
 
@@ -9,7 +12,7 @@
 // Constants
 #define NTIMERS  2
 #define MAX_THREADS    32
-#
+
 #define QUEUE_CAPACITY 16
 
 #define MACH_OFF   0
@@ -99,12 +102,6 @@ typedef struct {
 	int        size;
 }thread_stack_t;
 
-
-////////////////////////////
-// Structure declarations // 
-////////////////////////////
-
 const pcb_t nullp = {NULL, -1, PRSTAT_IDLE, 140, 0, 0};
 
-extern process_queue_t idle_queue; // Queue of waiting processes
-
+#endif

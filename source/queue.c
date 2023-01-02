@@ -1,51 +1,39 @@
-#include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
-#define MAX 6
+#include "../include/global.h"
 
-int intArray[MAX];
-int front = 0;
-int rear = -1;
-int itemCount = 0;
+process_queue_t idle_queue;
 
-int peek() {
-   return intArray[front];
+void init_queue(process_queue_t* q) {
+   q->front = 0;
+   q->rear = -1;
+   q->size = 0;
+
+   // Initialize idle process queue
+	for(int i = 0; i < QUEUE_CAPACITY; i++)
+		idle_queue.q[i] = (pcb_t*) &nullp;
 }
 
-bool isEmpty() {
-   return itemCount == 0;
-}
+void enqueue(process_queue_t* q, pcb_t* data) {
 
-bool isFull() {
-   return itemCount == MAX;
-}
-
-int size() {
-   return itemCount;
-}  
-
-void insert(int data) {
-
-   if(!isFull()) {
+   if(q->size != QUEUE_CAPACITY) {
 	
-      if(rear == MAX-1) {
-         rear = -1;            
+      if(q->rear == QUEUE_CAPACITY-1) {
+         q->rear = -1;            
       }       
 
-      intArray[++rear] = data;
-      itemCount++;
+      q->q[++q->rear] = data;
+      q->size++;
    }
 }
 
-int removeData() {
-   int data = intArray[front++];
+pcb_t* dequeue(process_queue_t* q) {
+   pcb_t* data = q->q[q->front++];
 	
-   if(front == MAX) {
-      front = 0;
+   if(q->front == QUEUE_CAPACITY) {
+      q->front = 0;
    }
 	
-   itemCount--;
+   q->size--;
    return data;  
 }

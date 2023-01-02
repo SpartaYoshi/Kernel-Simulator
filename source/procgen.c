@@ -6,6 +6,7 @@
 #include "../include/global.h"
 #include "../include/clock.h"
 #include "../include/ansi.h"
+#include "../include/queue.h"
 
 
 pthread_mutex_t procgen_mtx;
@@ -48,6 +49,8 @@ void kprocgen() {
 	printf("%sInitiated:%s Process generator\n", C_BCYN, C_RESET);
 
 	while(!kernel_start);
+	init_queue(&idle_queue);
+
 	while(1) {
 		pthread_cond_wait(&procgen_run_cnd, &procgen_mtx);
 		
@@ -64,8 +67,8 @@ void kprocgen() {
 			block->next = head;
 			head = block;
 
-			// Add to idle queue
-			
+			// Add to idle queues
+			enqueue(&idle_queue, block);
 		}
 		
 		pthread_cond_signal(&procgen_exit_cnd);

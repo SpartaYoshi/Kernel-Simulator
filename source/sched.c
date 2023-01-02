@@ -3,16 +3,16 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "../include/machine.h"  // includes "global.h"
+#include "../include/global.h"
+#include "../include/machine.h"
 #include "../include/clock.h"
 #include "../include/ansi.h"
+#include "../include/queue.h"
 
 pthread_mutex_t sched_mtx;
 pthread_cond_t sched_run_cnd;
 pthread_cond_t sched_exit_cnd;
 thread_t* thread_selected;
-
-process_queue_t idle_queue = {-1, -1, 0};
 
 pcb_t* schedule();
 void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb);
@@ -61,10 +61,6 @@ void ksched_disp() {
 	printf("%sInitiated:%s Scheduler/Dispatcher\n", C_BCYN, C_RESET);
 
 	while(!kernel_start);
-	
-	// Initialize idle process queue
-	for(int i = 0; i < QUEUE_CAPACITY; i++)
-		idle_queue.q[i] = (pcb_t*) &nullp;
 
 	// Start scheduler-dispatcher
 	while(1) {
