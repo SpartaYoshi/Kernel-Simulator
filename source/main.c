@@ -20,6 +20,7 @@ unsigned int ncores;
 unsigned int ncpu;
 unsigned int freq;	// clock tick by hardware frequency
 int kernel_start = 0;
+int policy;
 
 // Non-canonical terminal mode
 static struct termios term, oterm;
@@ -51,6 +52,8 @@ int main(int argc, char *argv[]) {
 	scanf("%d", &ncores);
 	printf("%sIndicate frequency (cycles per tick): %s", C_BYEL, C_RESET);
 	scanf("%d", &freq);
+	printf("%sIndicate scheduling policy. %s(0 = FCFS, 1 = Round Robin): %s", C_BYEL, C_YEL, C_RESET);
+	scanf("%d", &policy);
 
 
 	// Mutex and conditionals initialization
@@ -86,8 +89,11 @@ int main(int argc, char *argv[]) {
 
 	kernel_start = 1;
 	
+	/*
 	char c;
 	while ((c = getch()) != 'q' && c != KEY_ESC);
+	*/
+	while (1);
 	
 	/**
 	while (1) {

@@ -12,15 +12,18 @@
 // Constants
 #define NTIMERS  2
 #define MAX_THREADS    32
-
 #define QUEUE_CAPACITY 16
 
+// States
 #define MACH_OFF   0
 #define MACH_ON    1
 
 #define PRSTAT_IDLE 	 0
 #define PRSTAT_RUNNING   1
 #define PRSTAT_FINISHED  2
+
+#define POL_FCFS  0
+#define POL_RR    1
 
 // Macros (for thread stack)
 #define push(sp, n) (*((sp)++) = (n))
@@ -30,6 +33,7 @@
 extern unsigned int ncores;
 extern unsigned int ncpu;
 extern unsigned int freq;	// clock tick by hardware frequency
+extern int policy;
 
 // Flag
 extern int kernel_start;
@@ -101,7 +105,5 @@ typedef struct {
 	thread_t** sp;
 	int        size;
 }thread_stack_t;
-
-const pcb_t nullp = {NULL, -1, PRSTAT_IDLE, 140, 0, 0};
 
 #endif

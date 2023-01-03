@@ -14,7 +14,7 @@ pthread_cond_t procgen_run_cnd;
 pthread_cond_t procgen_exit_cnd;
 
 pcb_t* head = NULL;
-int generated = 0;
+int pcbs_generated = 0;
 
 
 // Timer for process generator
@@ -54,10 +54,12 @@ void kprocgen() {
 	while(1) {
 		pthread_cond_wait(&procgen_run_cnd, &procgen_mtx);
 		
-		if (generated < MAX_THREADS) {
+		if (pcbs_generated < MAX_THREADS * ncores * ncpu) {
+			printf("%sprocgen    %s|   Generating process %d\n", C_BCYN, C_RESET, pcbs_generated);
+
 			// Create process block
 			pcb_t* block = malloc(sizeof(pcb_t));
-			block->pid = ++generated;
+			block->pid = ++pcbs_generated;
 			block->state = PRSTAT_IDLE;
 			block->priority = 20;
 			block->context.PC = 0; // TODO: TBA

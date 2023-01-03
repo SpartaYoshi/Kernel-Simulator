@@ -86,6 +86,13 @@ thread_t* find_thread(core_t* core, char* proc_name) {
 	return thread;
 }
 
+thread_t* get_thread(int tid) {
+	int i = (tid / MAX_THREADS) / ncores; // CPU nº
+	int j = tid / MAX_THREADS;			  // Core nº
+	int k = tid % MAX_THREADS;			  // Thread nº
+
+	return &mach.cpu[i].core[j].thread[k];
+}
 
 
 // Quantum subtraction for all processes + compile processed threads into stack
