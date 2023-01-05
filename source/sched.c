@@ -16,11 +16,8 @@ pthread_cond_t sched_run_cnd;
 pthread_cond_t sched_exit_cnd;
 thread_t* thread_selected;
 
-
-
 pcb_t* schedule();
 void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb);
-
 
 // Timer for scheduler
 void timer_sched() {
@@ -84,17 +81,23 @@ void ksched_disp() {
 
 		// If there are free threads, select the next free one
 		if (pcbs_generated < MAX_THREADS) {
-			printf("%sscheduler  %s>>   Preparing thread %d...\n", C_BBLU, C_RESET, pcbs_generated - 1);
-			thread_selected = get_thread(pcbs_generated - 1);
+			int tid = pcbs_generated - 1;
+			printf("%sscheduler  %s>>   Preparing thread %d...\n", C_BBLU, C_RESET, tid);
+			thread_selected = get_thread(tid);
+			// NEW_PROCESS = schedule()
 		}
 
 		// If all threads are busy, get the process from the thread stack previously compiled
 		else {
 			current_pcb = thread_selected->proc;
-			printf("%sscheduler  %s>>   Found process %d timed out. Scheduling...\n", C_BBLU, C_RESET, current_pcb->pid);
+			// REPLACEMENT = schedule()
+			printf("%sscheduler  %s>>   Process %d has timed out. Located at %p\n", C_BBLU, C_RESET, current_pcb->pid, &current_pcb->pid);
 		}
 
+		printf("%sscheduler  %s>>   Scheduling...\n", C_BBLU, C_RESET);
 		pcb_t* replacement_pcb = schedule();
+		printf("%sscheduler  %s>>   Scheduled for process %d. Located at %p\n", C_BBLU, C_RESET, replacement_pcb->pid, &replacement_pcb->pid);
+		
 
 		switch(policy) {
 			case POL_RR:
@@ -121,12 +124,12 @@ void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 		*/
 
 	if (current_pcb != NULL) { // Only if all threads are busy
-		printf("%sdispatcher %s>>   Idling process %d\n", C_BGRN, C_RESET, current_pcb->pid);
+		printf("%sdispatcher %s>>   Idling process %d. Located at %p\n", C_BGRN, C_RESET, current_pcb->pid, &current_pcb->pid);
 		current_pcb->state = PRSTAT_IDLE;
 		enqueue(&idle_queue, current_pcb);
 	}
 
-	printf("%sdispatcher %s>>   Running process %d\n", C_BGRN, C_RESET, replacement_pcb->pid);
+	printf("%sdispatcher %s>>   Running process %d. Located at %p\n", C_BGRN, C_RESET, replacement_pcb->pid, &replacement_pcb->pid);
 
 	// Replace process
 	thread->proc = replacement_pcb;
@@ -154,6 +157,8 @@ pcb_t* schedule() {
 	switch(policy) {
 		case POL_FCFS:
 			out = dequeue(&idle_queue);
+		break;
+
 		case POL_RR:
 			// Sort queue by priority
 			qsort(&idle_queue, QUEUE_CAPACITY, sizeof(pcb_t), *priocmp);
@@ -162,6 +167,7 @@ pcb_t* schedule() {
 		default:
 		break;
 	}
+
 	return out;
 }
 

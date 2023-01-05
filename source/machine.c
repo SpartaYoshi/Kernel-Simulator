@@ -41,6 +41,8 @@ void init_machine() {
 	// Init stack pointer
 	thstack.sp = thstack.stack;
 	thstack.size = 0;
+
+	printf("Thread 0 %p\n", &mach.cpu[0].core[0].thread[0]);
 }
 
 void shutdown_machine() {
@@ -89,12 +91,17 @@ thread_t* get_thread(int tid) {
 	int j = tid / MAX_THREADS;			  // Core nº
 	int k = tid % MAX_THREADS;			  // Thread nº
 
-	return &mach.cpu[i].core[j].thread[k];
+	thread_t* out = &mach.cpu[i].core[j].thread[k];
+	printf("%smachine    %s>>   Address found for thread %d, core %d, cpu %d; (tid = %d). Located at %p\n", C_BMAG, C_RESET, k, j, i, tid, out);
+
+	return out;
 }
 
 
 // Quantum subtraction for all processes + compile processed threads into stack
 void quantum_compiler() {
+	printf("%smachine    %s>>   Quantum compiling...\n", C_BMAG, C_RESET);
+
 	for (int i = 0; i < ncpu; i++) {
 		for (int j = 0; j < ncores; j++){
 			core_t* jcore = &mach.cpu[i].core[j];

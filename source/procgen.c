@@ -13,7 +13,7 @@ pthread_mutex_t procgen_mtx;
 pthread_cond_t procgen_run_cnd;
 pthread_cond_t procgen_exit_cnd;
 
-pcb_t* head = NULL;
+pcb_t* head;
 int pcbs_generated = 0;
 
 
@@ -58,7 +58,7 @@ void kprocgen() {
 		pthread_cond_wait(&procgen_run_cnd, &procgen_mtx);
 		
 		if (pcbs_generated < MAX_THREADS * ncores * ncpu) {
-			printf("%sprocgen    %s>>   Generating process %d\n", C_BYEL, C_RESET, pcbs_generated);
+			printf("%sprocgen    %s>>   Generating process %d...\n", C_BYEL, C_RESET, pcbs_generated);
 
 			// Create process block
 			pcb_t* block = malloc(sizeof(pcb_t));
@@ -74,6 +74,8 @@ void kprocgen() {
 
 			// Add to idle queues
 			enqueue(&idle_queue, block);
+
+			printf("%sprocgen    %s>>   Process %d successfully generated. Located at %p\n", C_BYEL, C_RESET, block->pid, &block);
 		}
 		
 		pthread_cond_signal(&procgen_exit_cnd);
