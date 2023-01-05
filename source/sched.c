@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "../include/global.h"
 #include "../include/machine.h"
@@ -26,11 +27,14 @@ void timer_sched() {
 	printf("%sInitiated:%s Timer for scheduler\n", C_BCYN, C_RESET);
 
 	unsigned int current_tick = 0;
+	bool stacked_th = false;
 	
 	while(!kernel_start);
+	sleep(1); // Force clock to go first
 
 	pthread_mutex_lock(&clock_mtx);
 	pthread_mutex_lock(&sched_mtx);
+
 	while (1) {		
 		timers_done++;
 
@@ -40,38 +44,29 @@ void timer_sched() {
 			current_tick++;
 		current_tick = 0;
 
+		stacked_th = false;
 
-		// If there are free threads...
-		if (pcbs_generated < MAX_THREADS) {
-			while(idle_queue.size){
-				// Run scheduler/dispatcher
-				pthread_cond_signal(&sched_run_cnd);
-				// Here, the scheduler takes action and the timer waits for it to finish
-				pthread_cond_wait(&sched_exit_cnd, &sched_mtx); 
-
-				pthread_cond_signal(&tickwork_cnd);
-				pthread_cond_wait(&pending_cnd, &clock_mtx);
-			}
-		}
-
-		// If all threads are busy...
-		else {
-			quantum_compiler(); // quantum--; for all processes + compile stack of all running processes with 0 quantum
-
-			while(thstack.size) {
+		// If all threads are busy, tick quantums and compile timed out processes
+		if (pcbs_generated >= MAX_THREADS) {
+			if (thstack.size) {
 				// Pop from stack
 				thread_selected = pop(thstack.sp);
 				thstack.size--;
-
-				// Run scheduler/dispatcher
-				pthread_cond_signal(&sched_run_cnd);
-					// Here, the scheduler takes action and the timer waits for it to finish
-				pthread_cond_wait(&sched_exit_cnd, &sched_mtx); 
-
-				pthread_cond_signal(&tickwork_cnd);
-				pthread_cond_wait(&pending_cnd, &clock_mtx);
+				stacked_th = true;
 			}
+			else quantum_compiler(); // quantum--; for all processes + compile stack of all running processes with 0 quantum
 		}
+
+		// Run scheduler/dispatcher...
+		if (stacked_th || idle_queue.size) {
+			pthread_cond_signal(&sched_run_cnd);
+				// Here, the scheduler takes action and the timer waits for it to finish
+			pthread_cond_wait(&sched_exit_cnd, &sched_mtx);
+		}
+
+		// Signal to clock
+		pthread_cond_signal(&tickwork_cnd);
+		pthread_cond_wait(&pending_cnd, &clock_mtx);
 	}
 }
 
@@ -81,21 +76,22 @@ void ksched_disp() {
 	printf("%sInitiated:%s Scheduler/Dispatcher\n", C_BCYN, C_RESET);
 
 	while(!kernel_start);
-
 	// Start scheduler-dispatcher
 	while(1) {
 		pthread_cond_wait(&sched_run_cnd, &sched_mtx);
 
 		pcb_t* current_pcb = NULL;
+
 		// If there are free threads, select the next free one
 		if (pcbs_generated < MAX_THREADS) {
-			printf("%sscheduler  %s|   Preparing thread %d...\n", C_BCYN, C_RESET, pcbs_generated);
-			thread_selected = get_thread(pcbs_generated);
+			printf("%sscheduler  %s>>   Preparing thread %d...\n", C_BBLU, C_RESET, pcbs_generated - 1);
+			thread_selected = get_thread(pcbs_generated - 1);
 		}
+
 		// If all threads are busy, get the process from the thread stack previously compiled
 		else {
 			current_pcb = thread_selected->proc;
-			printf("%sscheduler  %s|   Found process %d timed out. Scheduling...\n", C_BCYN, C_RESET, current_pcb->pid);
+			printf("%sscheduler  %s>>   Found process %d timed out. Scheduling...\n", C_BBLU, C_RESET, current_pcb->pid);
 		}
 
 		pcb_t* replacement_pcb = schedule();
@@ -124,13 +120,13 @@ void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 		current_pcb->context.IR = "???";
 		*/
 
-	if (current_pcb != NULL){ // Only if all threads are busy
-		printf("%sdispatcher %s|   Idling process %d\n", C_BCYN, C_RESET, current_pcb->pid);
+	if (current_pcb != NULL) { // Only if all threads are busy
+		printf("%sdispatcher %s>>   Idling process %d\n", C_BGRN, C_RESET, current_pcb->pid);
 		current_pcb->state = PRSTAT_IDLE;
 		enqueue(&idle_queue, current_pcb);
 	}
 
-	printf("%sdispatcher %s|   Running process %d\n", C_BCYN, C_RESET, replacement_pcb->pid);
+	printf("%sdispatcher %s>>   Running process %d\n", C_BGRN, C_RESET, replacement_pcb->pid);
 
 	// Replace process
 	thread->proc = replacement_pcb;

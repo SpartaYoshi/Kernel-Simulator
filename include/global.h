@@ -32,6 +32,7 @@
 // Parameters
 extern unsigned int ncores;
 extern unsigned int ncpu;
+extern unsigned int nth;
 extern unsigned int freq;	// clock tick by hardware frequency
 extern int policy;
 

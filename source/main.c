@@ -18,6 +18,7 @@
 // Declaration
 unsigned int ncores;
 unsigned int ncpu;
+unsigned int nth;
 unsigned int freq;	// clock tick by hardware frequency
 int kernel_start = 0;
 int policy;
@@ -50,6 +51,8 @@ int main(int argc, char *argv[]) {
 	scanf("%d", &ncpu);
 	printf("%sIndicate number of cores (per CPU): %s", C_BYEL, C_RESET);
 	scanf("%d", &ncores);
+	printf("%sIndicate number of active threads (per core) (MAX = %d): %s", C_BYEL, MAX_THREADS, C_RESET);
+	scanf("%d", &nth);
 	printf("%sIndicate frequency (cycles per tick): %s", C_BYEL, C_RESET);
 	scanf("%d", &freq);
 	printf("%sIndicate scheduling policy. %s(0 = FCFS, 1 = Round Robin): %s", C_BYEL, C_YEL, C_RESET);
@@ -88,12 +91,14 @@ int main(int argc, char *argv[]) {
 	while (getch() != KEY_SPC);
 
 	kernel_start = 1;
-	
+	printf("\n%sStarting...%s\n", C_BHRED, C_RESET);
 	/*
 	char c;
 	while ((c = getch()) != 'q' && c != KEY_ESC);
 	*/
-	while (1);
+	while (1) {
+		fflush(stdout);
+	};
 	
 	/**
 	while (1) {

@@ -25,20 +25,24 @@ void timer_procgen() {
 
 	while(!kernel_start);
 
+	init_queue(&idle_queue);
+	sleep(1); // Force clock to go first
+
 	pthread_mutex_lock(&clock_mtx);
 	pthread_mutex_lock(&procgen_mtx);
+
 	while (1) {		
 		timers_done++;
-
-		while (current_tick < 10000*freq)	// Example: multiplication depending on frequency, it takes longer or shorter time
+		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency, it takes longer or shorter time
 			current_tick++;
 		current_tick = 0;
 
-		// Here, the process generator takes action and the timer waits for it to finish
+		// Run process generator...
 		pthread_cond_signal(&procgen_run_cnd);
+			// Here, the process generator takes action and the timer waits for it to finish
 		pthread_cond_wait(&procgen_exit_cnd, &procgen_mtx); 
-
 		
+		// Signal to clock
 		pthread_cond_signal(&tickwork_cnd);
 		pthread_cond_wait(&pending_cnd, &clock_mtx);
 	}
@@ -49,13 +53,12 @@ void kprocgen() {
 	printf("%sInitiated:%s Process generator\n", C_BCYN, C_RESET);
 
 	while(!kernel_start);
-	init_queue(&idle_queue);
 
 	while(1) {
 		pthread_cond_wait(&procgen_run_cnd, &procgen_mtx);
 		
 		if (pcbs_generated < MAX_THREADS * ncores * ncpu) {
-			printf("%sprocgen    %s|   Generating process %d\n", C_BCYN, C_RESET, pcbs_generated);
+			printf("%sprocgen    %s>>   Generating process %d\n", C_BYEL, C_RESET, pcbs_generated);
 
 			// Create process block
 			pcb_t* block = malloc(sizeof(pcb_t));

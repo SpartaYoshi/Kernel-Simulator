@@ -31,8 +31,7 @@ void init_machine() {
 			core_t jcore;
 
 			jcore.cid = j;
-			jcore.thread_count = 0;
-
+			jcore.thread_count = nth;
 			icpu.core[j] = jcore;
 		}
 		mach.cpu[i] = icpu;
@@ -63,18 +62,17 @@ void shutdown_machine() {
 }
 
 
-
-void init_core_thread(core_t* core, thread_t* thread, void* start_routine, char* proc_name) {
-	thread->proc = malloc(sizeof(pcb_t));
+/*
+void init_core_thread(core_t* core, thread_t* thread, void* start_routine, char* proc_name) { // UNUSED YET
 	strcpy(thread->proc_name,proc_name);
 
-	pthread_create(&thread->handle, NULL, start_routine, (void *) &core);
+	//pthread_create(&thread->handle, NULL, start_routine, (void *) &core);
 	
 	printf("Initiated thread %d: %s \n", core->thread_count, proc_name);
 	core->thread_count++;
 
 }
-
+*/
 
 thread_t* find_thread(core_t* core, char* proc_name) {
 	thread_t* thread = NULL;
