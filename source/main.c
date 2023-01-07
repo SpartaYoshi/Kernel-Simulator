@@ -121,6 +121,7 @@ int main(int argc, char *argv[]) {
 		fflush(stdout);
 	};
 	
+	
 	/**
 	while (1) {
 		
@@ -128,7 +129,7 @@ int main(int argc, char *argv[]) {
 		if (c == 'q' || c == KEY_ESC) 
 			break;
 	}
-	**/
+	
 
 	// Hardware shutdown
 	shutdown_machine();
@@ -150,6 +151,6 @@ int main(int argc, char *argv[]) {
 	pthread_cond_destroy(&procgen_run_cnd);
 	pthread_cond_destroy(&procgen_exit_cnd);
 
-
+	**/
 	exit(0);
 }

@@ -22,6 +22,7 @@ void init_machine() {
 	printf("%sInitiated:%s Machine (%d %d-core CPUs)\n", C_BCYN, C_RESET, ncpu, ncores);
 
 	mach = (machine_t) { (cpu_t*) malloc(sizeof(cpu_t) * ncpu), MACH_OFF };
+	int gtid = 0;
 
 	for (int i = 0; i < ncpu; i++) {
 		cpu_t icpu = { (core_t*) malloc(sizeof(core_t) * ncores) } ;
@@ -32,6 +33,13 @@ void init_machine() {
 
 			jcore.cid = j;
 			jcore.thread_count = nth;
+
+			// Initialize process block pointers as NULL to avoid memory access violation
+			for (int k = 0; k < nth; k++){
+				jcore.thread[k].proc = NULL;
+				jcore.thread[k].global_tid = gtid++;
+			}
+
 			icpu.core[j] = jcore;
 		}
 		mach.cpu[i] = icpu;
@@ -42,6 +50,7 @@ void init_machine() {
 	thstack.sp = thstack.stack;
 	thstack.size = 0;
 }
+
 
 void shutdown_machine() {
 	printf("\nShutting down machine...\n");
@@ -86,7 +95,7 @@ thread_t* find_thread(core_t* core, char* proc_name) {
 
 thread_t* get_thread(int tid) {
 	int i = (tid / nth) / ncores; // CPU nº
-	int j = tid / nth;			  // Core nº
+	int j = (tid / nth) % ncores; // Core nº
 	int k = tid % nth;			  // Thread nº
 
 	thread_t* out = &mach.cpu[i].core[j].thread[k];
@@ -96,25 +105,39 @@ thread_t* get_thread(int tid) {
 }
 
 
-// Quantum subtraction for all processes + compile processed threads into stack
-void quantum_compiler() {
-	printf("%smachine    %s>>   Quantum compiling...\n", C_BMAG, C_RESET);
+// Quantum subtraction for all processes
+void subtract_quantum() {
+	printf("%smachine    %s>>   Subtracting quantum for all active processes...\n", C_BMAG, C_RESET);
 
 	for (int i = 0; i < ncpu; i++) {
 		for (int j = 0; j < ncores; j++){
 			core_t* jcore = &mach.cpu[i].core[j];
 			for (int k = 0; k < jcore->thread_count; k++) {
 				pcb_t* process_block = jcore->thread[k].proc;
-
-				/*
-				// Ignore NULL processes
-				if (process_block == NULL)
-					continue;*/
+				if (!process_block)
+					continue;
 
 				if (process_block->state == PRSTAT_RUNNING && process_block->quantum > 0)
 					process_block->quantum--;
-				if (process_block->quantum == 0) {
-					push(*thstack.sp, jcore->thread[k]);
+			}
+		}
+	}
+}
+
+// Compile processed threads into stack
+void quantum_compiler() {
+	printf("%smachine    %s>>   Compiling timed out quantums...\n", C_BMAG, C_RESET);
+
+	for (int i = 0; i < ncpu; i++) {
+		for (int j = 0; j < ncores; j++){
+			core_t* jcore = &mach.cpu[i].core[j];
+			for (int k = 0; k < jcore->thread_count; k++) {
+				pcb_t* process_block = jcore->thread[k].proc;
+				if (!process_block)
+					continue;
+
+				if (process_block->state == PRSTAT_RUNNING && process_block->quantum == 0) {
+					push(thstack.sp, &jcore->thread[k]);
 					thstack.size++;
 				}
 			}

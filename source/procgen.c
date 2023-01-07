@@ -57,7 +57,8 @@ void kprocgen() {
 	while(1) {
 		pthread_cond_wait(&procgen_run_cnd, &procgen_mtx);
 		
-		if (pcbs_generated < (MAX_THREADS * ncores * ncpu)) {
+		if (pcbs_generated < (nth * ncores * ncpu) + QUEUE_CAPACITY && \
+		    idle_queue.size < QUEUE_CAPACITY) {
 			printf("%sprocgen    %s>>   Generating process %d...\n", C_BYEL, C_RESET, pcbs_generated + 1);
 
 			// Create process block

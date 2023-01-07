@@ -8,4 +8,3 @@ extern int pcbs_generated;
 
 void timer_procgen();
 void kprocgen();
-thread_t* get_thread(int tid);

@@ -16,7 +16,7 @@
 #define MAX_CORES		8
 #define MAX_THREADS    32
 
-#define QUEUE_CAPACITY   16
+#define QUEUE_CAPACITY   100
 #define QUANTUM_DEFAULT  40
 
 // States
@@ -81,6 +81,7 @@ typedef struct {
 
 // Thread
 typedef struct {
+	int			 global_tid;
 	pthread_t    handle;
 	pcb_t*       proc;
 	char         proc_name[128];
@@ -107,7 +108,7 @@ typedef struct {
 
 // Thread stack
 typedef struct {
-	thread_t*  stack[QUEUE_CAPACITY];
+	thread_t*  stack[MAX_THREADS * MAX_CORES * MAX_CPUS];
 	thread_t** sp;
 	int        size;
 }thread_stack_t;

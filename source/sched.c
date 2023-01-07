@@ -15,6 +15,7 @@ pthread_mutex_t sched_mtx;
 pthread_cond_t sched_run_cnd;
 pthread_cond_t sched_exit_cnd;
 thread_t* thread_selected;
+int tid = 0;
 
 pcb_t* schedule();
 void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb);
@@ -44,14 +45,20 @@ void timer_sched() {
 		stacked_th = false;
 
 		// If all threads are busy, tick quantums and compile timed out processes
-		if (pcbs_generated >= MAX_THREADS) {
-			if (thstack.size) {
+		if (tid >= (nth * ncores * ncpu)) {
+			if (!thstack.size)
+				quantum_compiler(); // compile stack of all running processes with 0 quantum
+			
+			// If after compiling there are threads to check...
+			if (thstack.size > 0) {
 				// Pop from stack
 				thread_selected = pop(thstack.sp);
 				thstack.size--;
 				stacked_th = true;
 			}
-			else quantum_compiler(); // quantum--; for all processes + compile stack of all running processes with 0 quantum
+
+			// If not, clear thread selection to cancel scheduling
+			else thread_selected = NULL;
 		}
 
 		// Run scheduler/dispatcher...
@@ -60,6 +67,10 @@ void timer_sched() {
 				// Here, the scheduler takes action and the timer waits for it to finish
 			pthread_cond_wait(&sched_exit_cnd, &sched_mtx);
 		}
+
+		// Subtract quantum to running processes
+		/* if (pcbs_generated > 0)   // avoid first unneccessary iteration */
+		subtract_quantum();
 
 		// Signal to clock
 		pthread_cond_signal(&tickwork_cnd);
@@ -78,20 +89,28 @@ void ksched_disp() {
 		pthread_cond_wait(&sched_run_cnd, &sched_mtx);
 
 		pcb_t* current_pcb = NULL;
+		
 
 		// If there are free threads, select the next free one
-		if (pcbs_generated < MAX_THREADS) {
-			int tid = pcbs_generated - 1;
+		if (tid < (nth * ncores * ncpu)) {
 			printf("%sscheduler  %s>>   Preparing thread %d...\n", C_BBLU, C_RESET, tid);
 			thread_selected = get_thread(tid);
 			// NEW_PROCESS = schedule()
+			tid++;
 		}
 
-		// If all threads are busy, get the process from the thread stack previously compiled
-		else {
+		// If all threads are busy and the stack has found a thread to switch context
+		else if (thread_selected) {
 			current_pcb = thread_selected->proc;
 			// REPLACEMENT = schedule()
-			printf("%sscheduler  %s>>   Process %d has timed out. Located at %p\n", C_BBLU, C_RESET, current_pcb->pid, current_pcb);
+			printf("%sscheduler  %s>>   Process %d has timed out in thread %d. Located at %p\n", C_BBLU, C_RESET, current_pcb->pid, thread_selected->global_tid, current_pcb);
+		}
+
+		// Else then compilation found no threads available. Cancel scheduling.
+		else {
+			printf("%sscheduler  %s>>   No threads are available for scheduling at this moment.\n", C_BBLU, C_RESET);
+			pthread_cond_signal(&sched_exit_cnd);
+			continue;
 		}
 
 		printf("%sscheduler  %s>>   Scheduling...\n", C_BBLU, C_RESET);
@@ -124,6 +143,7 @@ void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 		*/
 
 	if (current_pcb != NULL) { // Only if all threads are busy
+		printf("%sdispatcher %s>>   Switching context for thread %d...\n", C_BGRN, C_RESET, thread->global_tid);
 		printf("%sdispatcher %s>>   Idling process %d. Located at %p\n", C_BGRN, C_RESET, current_pcb->pid, current_pcb);
 		current_pcb->state = PRSTAT_IDLE;
 		enqueue(&idle_queue, current_pcb);
