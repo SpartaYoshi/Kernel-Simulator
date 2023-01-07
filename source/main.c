@@ -70,6 +70,10 @@ int main(int argc, char *argv[]) {
 
 	printf("%sIndicate frequency (cycles per tick): %s", C_BYEL, C_RESET);
 	scanf("%d", &freq);
+	while (freq < 1) {
+		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s", C_BRED, C_RESET, C_BWHT, C_RESET);
+		scanf("%d", &freq);
+	}
 
 	printf("%sIndicate scheduling policy. %s(0 = FCFS, 1 = Round Robin): %s", C_BYEL, C_YEL, C_RESET);
 	scanf("%d", &policy);

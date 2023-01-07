@@ -91,12 +91,12 @@ void ksched_disp() {
 		else {
 			current_pcb = thread_selected->proc;
 			// REPLACEMENT = schedule()
-			printf("%sscheduler  %s>>   Process %d has timed out. Located at %p\n", C_BBLU, C_RESET, current_pcb->pid, &current_pcb->pid);
+			printf("%sscheduler  %s>>   Process %d has timed out. Located at %p\n", C_BBLU, C_RESET, current_pcb->pid, current_pcb);
 		}
 
 		printf("%sscheduler  %s>>   Scheduling...\n", C_BBLU, C_RESET);
 		pcb_t* replacement_pcb = schedule();
-		printf("%sscheduler  %s>>   Scheduled for process %d. Located at %p\n", C_BBLU, C_RESET, replacement_pcb->pid, &replacement_pcb->pid);
+		printf("%sscheduler  %s>>   Scheduled for process %d. Located at %p\n", C_BBLU, C_RESET, replacement_pcb->pid, replacement_pcb);
 		
 
 		switch(policy) {
@@ -124,21 +124,26 @@ void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 		*/
 
 	if (current_pcb != NULL) { // Only if all threads are busy
-		printf("%sdispatcher %s>>   Idling process %d. Located at %p\n", C_BGRN, C_RESET, current_pcb->pid, &current_pcb->pid);
+		printf("%sdispatcher %s>>   Idling process %d. Located at %p\n", C_BGRN, C_RESET, current_pcb->pid, current_pcb);
 		current_pcb->state = PRSTAT_IDLE;
 		enqueue(&idle_queue, current_pcb);
 	}
 
-	printf("%sdispatcher %s>>   Running process %d. Located at %p\n", C_BGRN, C_RESET, replacement_pcb->pid, &replacement_pcb->pid);
+	printf("%sdispatcher %s>>   Running process %d. Located at %p\n", C_BGRN, C_RESET, replacement_pcb->pid, replacement_pcb);
 
-	// Replace process
+	// Replace pointer to process
 	thread->proc = replacement_pcb;
 
 	// Load context of replacement process and run it
 		/*
 		thread->PC = replacement_pcb->context.PC;
 		*/
+
+	// Update properties
 	replacement_pcb->state = PRSTAT_RUNNING;
+	replacement_pcb->quantum = QUANTUM_DEFAULT;
+	if (replacement_pcb->priority < 140)
+		replacement_pcb->priority++;
 }
 
 

@@ -11,10 +11,13 @@
 
 // Constants
 #define NTIMERS  2
+
 #define MAX_CPUS		3
 #define MAX_CORES		8
 #define MAX_THREADS    32
-#define QUEUE_CAPACITY 16
+
+#define QUEUE_CAPACITY   16
+#define QUANTUM_DEFAULT  40
 
 // States
 #define MACH_OFF   0

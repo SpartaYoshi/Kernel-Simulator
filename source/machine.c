@@ -41,8 +41,6 @@ void init_machine() {
 	// Init stack pointer
 	thstack.sp = thstack.stack;
 	thstack.size = 0;
-
-	printf("Thread 0 %p\n", &mach.cpu[0].core[0].thread[0]);
 }
 
 void shutdown_machine() {
@@ -87,9 +85,9 @@ thread_t* find_thread(core_t* core, char* proc_name) {
 }
 
 thread_t* get_thread(int tid) {
-	int i = (tid / MAX_THREADS) / ncores; // CPU nº
-	int j = tid / MAX_THREADS;			  // Core nº
-	int k = tid % MAX_THREADS;			  // Thread nº
+	int i = (tid / nth) / ncores; // CPU nº
+	int j = tid / nth;			  // Core nº
+	int k = tid % nth;			  // Thread nº
 
 	thread_t* out = &mach.cpu[i].core[j].thread[k];
 	printf("%smachine    %s>>   Address found for thread %d, core %d, cpu %d; (tid = %d). Located at %p\n", C_BMAG, C_RESET, k, j, i, tid, out);
@@ -107,9 +105,15 @@ void quantum_compiler() {
 			core_t* jcore = &mach.cpu[i].core[j];
 			for (int k = 0; k < jcore->thread_count; k++) {
 				pcb_t* process_block = jcore->thread[k].proc;
+
+				/*
+				// Ignore NULL processes
+				if (process_block == NULL)
+					continue;*/
+
 				if (process_block->state == PRSTAT_RUNNING && process_block->quantum > 0)
 					process_block->quantum--;
-				if(!process_block->quantum) {
+				if (process_block->quantum == 0) {
 					push(*thstack.sp, jcore->thread[k]);
 					thstack.size++;
 				}

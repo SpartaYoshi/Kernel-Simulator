@@ -57,8 +57,8 @@ void kprocgen() {
 	while(1) {
 		pthread_cond_wait(&procgen_run_cnd, &procgen_mtx);
 		
-		if (pcbs_generated < MAX_THREADS * ncores * ncpu) {
-			printf("%sprocgen    %s>>   Generating process %d...\n", C_BYEL, C_RESET, pcbs_generated);
+		if (pcbs_generated < (MAX_THREADS * ncores * ncpu)) {
+			printf("%sprocgen    %s>>   Generating process %d...\n", C_BYEL, C_RESET, pcbs_generated + 1);
 
 			// Create process block
 			pcb_t* block = malloc(sizeof(pcb_t));
@@ -66,7 +66,7 @@ void kprocgen() {
 			block->state = PRSTAT_IDLE;
 			block->priority = 20;
 			block->context.PC = 0; // TODO: TBA
-			block->quantum = 40;
+			block->quantum = QUANTUM_DEFAULT;
 
 			// Link to dynamic list of processes
 			block->next = head;
@@ -75,7 +75,7 @@ void kprocgen() {
 			// Add to idle queues
 			enqueue(&idle_queue, block);
 
-			printf("%sprocgen    %s>>   Process %d successfully generated. Located at %p\n", C_BYEL, C_RESET, block->pid, &block);
+			printf("%sprocgen    %s>>   Process %d successfully generated. Located at %p\n", C_BYEL, C_RESET, block->pid, block);
 		}
 		
 		pthread_cond_signal(&procgen_exit_cnd);
