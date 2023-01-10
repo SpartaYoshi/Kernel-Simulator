@@ -18,6 +18,7 @@ void init_core_thread(core_t* core, thread_t* thread, void* start_routine, char*
 
 /////////////////////////
 
+
 void init_machine() {
 	printf("%sInitiated:%s Machine (%d %d-core CPUs)\n", C_BCYN, C_RESET, ncpu, ncores);
 

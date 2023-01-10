@@ -11,6 +11,7 @@
 #include "../include/procgen.h"
 #include "../include/machine.h"
 #include "../include/ansi.h"
+#include "../include/memory.h"
 
 #define KEY_ESC 0x001b
 #define KEY_SPC 0x0020
@@ -108,6 +109,7 @@ int main(int argc, char *argv[]) {
 	pthread_create(&procgen_o, NULL, (void *) kprocgen, NULL);
 
 	init_machine();
+	init_memory();
 
 	// Kernel simulation.
 	sleep(2); // To force print after thread init

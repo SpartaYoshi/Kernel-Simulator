@@ -66,7 +66,7 @@ void kprocgen() {
 			block->pid = ++pcbs_generated;
 			block->state = PRSTAT_IDLE;
 			block->priority = 20;
-			block->context.PC = 0; // TODO: TBA
+			//block->context.PC = 0; // TODO: TBA
 			block->quantum = QUANTUM_DEFAULT;
 
 			// Link to dynamic list of processes

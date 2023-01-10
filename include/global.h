@@ -19,6 +19,8 @@
 #define QUEUE_CAPACITY   100
 #define QUANTUM_DEFAULT  40
 
+#define MEMSIZE_BITS 24
+
 // States
 #define MACH_OFF   0
 #define MACH_ON    1
@@ -49,18 +51,35 @@ extern int kernel_start;
 // Stuctures //
 ///////////////
 
+// Alias
+typedef unsigned long dword;  // 4 byte word (32 bits) for memory
+
 // Translation Lookaside Buffer (TLB)
 typedef struct {
-	unsigned int virtual_adr;
-	unsigned int physical_adr;
+	dword virtual_adr;
+	dword physical_adr;
 } tlb_t;
 
+// Memory Management Unit (MMU)
+typedef struct {
+	tlb_t tlb;
+} mmu_t;
+
+// Memory Management Type
+typedef struct {
+	dword* code;
+	dword* data;
+	dword* pgb;
+} mm_t;
+
+/*
 // Context for PCB
 typedef struct {
-	unsigned int PC; 	// Virtual address of next instruction
-	//char* IR;		 	// Last instruction executed
-	//tlb_t tlb;
+	unsigned int pc; 	// Virtual address of next instruction
+	char* ir;		 	// Last instruction executed
+	mmu_t mem_mgr;
 } pcb_context_t;
+*/
 
 // Process Control Block (PCB)
 typedef struct _pcb { 
@@ -68,9 +87,8 @@ typedef struct _pcb {
 	pid_t         pid;
 	int           state;
 	int           priority;
-	pcb_context_t context;
 	unsigned int  quantum;
-	// [...]
+	mm_t		  mm;
 } pcb_t;
 
 // Process Queue
@@ -81,11 +99,14 @@ typedef struct {
 
 // Thread
 typedef struct {
-	int			 global_tid;
-	pthread_t    handle;
-	pcb_t*       proc;
-	char         proc_name[128];
-	unsigned int PC;
+	int			global_tid;
+	pthread_t   handle;
+	pcb_t*      proc;
+	char        proc_name[128];
+	dword		pc;
+	dword		ir;
+	dword*		ptbr;		
+	mmu_t		mmu;
 } thread_t;
 
 // Core
