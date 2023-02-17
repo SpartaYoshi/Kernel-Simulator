@@ -3,9 +3,10 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "../include/commons.h"
-#include "../include/clock.h"
 #include "../include/ansi.h"
+#include "../include/clock.h"
+#include "../include/commons.h"
+
 #include "../include/queue.h"
 
 

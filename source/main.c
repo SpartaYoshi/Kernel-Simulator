@@ -148,7 +148,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	init_machine();
-	init_memory();
 
 	// Kernel simulation.
 	sleep(2); // To force print after thread init

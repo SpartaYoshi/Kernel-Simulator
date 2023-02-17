@@ -18,9 +18,9 @@
 #define MAX_THREADS    32
 
 #define QUEUE_CAPACITY   100
-#define QUANTUM_DEFAULT  40
+#define TLB_CAPACITY       6
+#define QUANTUM_DEFAULT   40
 
-#define MEMSIZE_BITS 24
 
 // States
 #define MACH_OFF   0
@@ -57,8 +57,14 @@ extern int kernel_start;
 
 // Translation Lookaside Buffer (TLB)
 typedef struct {
-	uint32_t virtual_adr;
-	uint32_t physical_adr;
+	uint32_t virt_adr; // page
+	uint32_t phys_adr; // frame
+} tlb_entry_t;
+
+// Translation Lookaside Buffer (TLB)
+typedef struct {
+	tlb_entry_t tlb_table[TLB_CAPACITY];
+
 } tlb_t;
 
 // Memory Management Unit (MMU)
@@ -66,7 +72,7 @@ typedef struct {
 	tlb_t tlb;
 } mmu_t;
 
-// Memory Management Type
+// Memory Management
 typedef struct {
 	uint32_t code; // points to start of code segment
 	uint32_t data; // points to start of data segment
@@ -85,7 +91,7 @@ typedef struct _pcb {
 	pid_t         pid;
 	int           state;
 	int           priority;
-	uint32_t	  quantum;
+	uint16_t	  quantum;
 	mm_t		  mm;
 	pcb_context_t context;
 } pcb_t;
@@ -102,7 +108,7 @@ typedef struct {
 	pthread_t    handle;
 	pcb_t*       proc;
 	char         proc_name[128];
-	uint32_t	 ptbr;		
+	uint8_t*	 ptbr;		
 	mmu_t	     mmu;
 } thread_t;
 
