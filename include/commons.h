@@ -55,28 +55,22 @@ extern int kernel_start;
 // Stuctures //
 ///////////////
 
-// Translation Lookaside Buffer (TLB)
+// Translation Lookaside Buffer Entry (TLB)
 typedef struct {
 	uint32_t virt_adr; // page
 	uint32_t phys_adr; // frame
-} tlb_entry_t;
-
-// Translation Lookaside Buffer (TLB)
-typedef struct {
-	tlb_entry_t tlb_table[TLB_CAPACITY];
-
 } tlb_t;
 
 // Memory Management Unit (MMU)
 typedef struct {
-	tlb_t tlb;
+	tlb_t tlb[TLB_CAPACITY];
 } mmu_t;
 
 // Memory Management
 typedef struct {
 	uint32_t code; // points to start of code segment
 	uint32_t data; // points to start of data segment
-	uint32_t pgb;  // points to page table physical address
+	uint8_t* pgb;  // points to page table physical address
 } mm_t;
 
 // Context for PCB
@@ -87,29 +81,30 @@ typedef struct {
 
 // Process Control Block (PCB)
 typedef struct _pcb { 
-	struct _pcb * next;
-	pid_t         pid;
-	int           state;
-	int           priority;
-	uint16_t	  quantum;
-	mm_t		  mm;
-	pcb_context_t context;
+	struct _pcb *  next;
+	pid_t          pid;
+	int            state;
+	int            priority;
+	uint16_t	   quantum;
+	mm_t		   mm;
+	pcb_context_t* context;
 } pcb_t;
 
 // Process Queue
 typedef struct {
-	int    front, rear, size; 
-	pcb_t* q[QUEUE_CAPACITY]; 
+	int    front, rear, size;
+	pcb_t* q[QUEUE_CAPACITY];
 } process_queue_t;
 
 // Thread
 typedef struct {
-	int			 global_tid;
-	pthread_t    handle;
-	pcb_t*       proc;
-	char         proc_name[128];
-	uint8_t*	 ptbr;		
-	mmu_t	     mmu;
+	int			   global_tid;
+	pthread_t      handle;
+	pcb_t*         proc;
+	char           proc_name[128];
+	uint8_t*	   ptbr;
+	mmu_t	       mmu;
+	pcb_context_t* context;
 } thread_t;
 
 // Core

@@ -102,19 +102,23 @@ void ksched_disp() {
 		else if (thread_selected) {
 			current_pcb = thread_selected->proc;
 			// REPLACEMENT = schedule()
-			printf("%sscheduler  %s>>   Process %d has timed out in thread %d. Located at %p\n", C_BBLU, C_RESET, current_pcb->pid, thread_selected->global_tid, current_pcb);
+			printf("%sscheduler  %s>>   Process %d has timed out in thread %d.\
+				 Located at %p\n",\
+				 C_BBLU, C_RESET, current_pcb->pid, thread_selected->global_tid, current_pcb);
 		}
 
 		// Else then compilation found no threads available. Cancel scheduling.
 		else {
-			printf("%sscheduler  %s>>   No threads are available for scheduling at this moment.\n", C_BBLU, C_RESET);
+			printf("%sscheduler  %s>>   No threads are available for scheduling at this moment.\n",\
+				 C_BBLU, C_RESET);
 			pthread_cond_signal(&sched_exit_cnd);
 			continue;
 		}
 
 		printf("%sscheduler  %s>>   Scheduling...\n", C_BBLU, C_RESET);
 		pcb_t* replacement_pcb = schedule();
-		printf("%sscheduler  %s>>   Scheduled for process %d. Located at %p\n", C_BBLU, C_RESET, replacement_pcb->pid, replacement_pcb);
+		printf("%sscheduler  %s>>   Scheduled for process %d. Located at %p\n",\
+			 C_BBLU, C_RESET, replacement_pcb->pid, replacement_pcb);
 		
 
 		switch(policy) {
@@ -136,27 +140,26 @@ void ksched_disp() {
 void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 
 	// Save context of current process and stop it
-		/*
-		current_pcb->context.PC = thread->PC;
-		current_pcb->context.IR = "???";
-		*/
+	current_pcb->context = thread->context;
+		
 
 	if (current_pcb != NULL) { // Only if all threads are busy
-		printf("%sdispatcher %s>>   Switching context for thread %d...\n", C_BGRN, C_RESET, thread->global_tid);
-		printf("%sdispatcher %s>>   Idling process %d. Located at %p\n", C_BGRN, C_RESET, current_pcb->pid, current_pcb);
+		printf("%sdispatcher %s>>   Switching context for thread %d...\n",\
+			 C_BGRN, C_RESET, thread->global_tid);
+		printf("%sdispatcher %s>>   Idling process %d. Located at %p\n",\
+			 C_BGRN, C_RESET, current_pcb->pid, current_pcb);
 		current_pcb->state = PRSTAT_IDLE;
 		enqueue(&idle_queue, current_pcb);
 	}
 
-	printf("%sdispatcher %s>>   Running process %d. Located at %p\n", C_BGRN, C_RESET, replacement_pcb->pid, replacement_pcb);
+	printf("%sdispatcher %s>>   Running process %d. Located at %p\n",\
+		 C_BGRN, C_RESET, replacement_pcb->pid, replacement_pcb);
 
 	// Replace pointer to process
 	thread->proc = replacement_pcb;
-
 	// Load context of replacement process and run it
-		/*
-		thread->PC = replacement_pcb->context.PC;
-		*/
+	thread->context = replacement_pcb->context;
+	thread->ptbr = replacement_pcb->mm.pgb;
 
 	// Update properties
 	replacement_pcb->state = PRSTAT_RUNNING;

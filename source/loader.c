@@ -6,7 +6,7 @@
 #include "../include/ansi.h"
 #include "../include/clock.h"
 #include "../include/commons.h"
-
+#include "../include/memory.h"
 #include "../include/queue.h"
 
 
@@ -34,7 +34,8 @@ void timer_loader() {
 
 	while (1) {		
 		timers_done++;
-		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency, it takes longer or shorter time
+		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency, \
+											   it takes longer or shorter time
 			current_tick++;
 		current_tick = 0;
 
@@ -60,14 +61,16 @@ void kloader() {
 		
 		if (pcbs_generated_l < (nth * ncores * ncpu) + QUEUE_CAPACITY && \
 		    idle_queue.size < QUEUE_CAPACITY) {
-			printf("%sloader    %s>>   Generating process %d...\n", C_BYEL, C_RESET, pcbs_generated_l + 1);
+			printf("%sloader    %s>>   Generating process %d...\n",\
+				 C_BYEL, C_RESET, pcbs_generated_l + 1);
 
 			// Create process block
-			pcb_t* block = malloc(sizeof(pcb_t));
+			pcb_t* block = (pcb_t *) malloc(sizeof(pcb_t));
 			block->pid = ++pcbs_generated_l;
 			block->state = PRSTAT_IDLE;
 			block->priority = 20;
 			block->quantum = QUANTUM_DEFAULT;
+			block->context = (pcb_context_t *) malloc(sizeof(pcb_context_t));
 
 			// Link to dynamic list of processes
 			block->next = head_l;
@@ -77,11 +80,10 @@ void kloader() {
 			enqueue(&idle_queue, block);
 
 			// Reserve page table in memory
-			/*
-			block->mm.pgb = ???
-			*/
+			block->mm.pgb = create_page_table();
 
-			printf("%sloader    %s>>   Process %d successfully generated. Located at %p\n", C_BYEL, C_RESET, block->pid, block);
+			printf("%sloader    %s>>   Process %d successfully generated. Located at %p\n",\
+				 C_BYEL, C_RESET, block->pid, block);
 		}
 		
 		pthread_cond_signal(&loader_exit_cnd);

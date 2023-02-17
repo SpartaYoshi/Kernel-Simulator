@@ -32,7 +32,8 @@ void timer_procgen() {
 
 	while (1) {		
 		timers_done++;
-		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency, it takes longer or shorter time
+		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency,\
+											   it takes longer or shorter time
 			current_tick++;
 		current_tick = 0;
 
@@ -58,7 +59,8 @@ void kprocgen() {
 		
 		if (pcbs_generated < (nth * ncores * ncpu) + QUEUE_CAPACITY && \
 		    idle_queue.size < QUEUE_CAPACITY) {
-			printf("%sprocgen    %s>>   Generating process %d...\n", C_BYEL, C_RESET, pcbs_generated + 1);
+			printf("%sprocgen    %s>>   Generating process %d...\n",\
+				 C_BYEL, C_RESET, pcbs_generated + 1);
 
 			// Create process block
 			pcb_t* block = malloc(sizeof(pcb_t));
@@ -74,7 +76,9 @@ void kprocgen() {
 			// Add to idle queues
 			enqueue(&idle_queue, block);
 
-			printf("%sprocgen    %s>>   Process %d successfully generated. Located at %p\n", C_BYEL, C_RESET, block->pid, block);
+			printf("%sprocgen    %s>>   Process %d successfully generated.\
+				 Located at %p\n",\
+				 C_BYEL, C_RESET, block->pid, block);
 		}
 		
 		pthread_cond_signal(&procgen_exit_cnd);

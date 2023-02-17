@@ -10,17 +10,14 @@
 #include "../include/procgen.h"
 #include "../include/ansi.h"
 
-// Declaration
+
 machine_t      mach;
 thread_stack_t thstack;
 
-void init_core_thread(core_t* core, thread_t* thread, void* start_routine, char* proc_name);
-
-/////////////////////////
-
 
 void init_machine() {
-	printf("%sInitiated:%s Machine (%d %d-core CPUs)\n", C_BCYN, C_RESET, ncpu, ncores);
+	printf("%sInitiated:%s Machine (%d %d-core CPUs)\n",\
+		 C_BCYN, C_RESET, ncpu, ncores);
 
 	mach = (machine_t) { (cpu_t*) malloc(sizeof(cpu_t) * ncpu), MACH_OFF };
 	int gtid = 0;
@@ -35,12 +32,13 @@ void init_machine() {
 			jcore.cid = j;
 			jcore.thread_count = nth;
 
-			// Initialize process block pointers as NULL to avoid memory access violation
+			// Initialize thread attributes
 			for (int k = 0; k < nth; k++){
 				jcore.thread[k].proc = NULL;
+				jcore.thread[k].context = NULL;
+				jcore.thread[k].ptbr = NULL;
 				jcore.thread[k].global_tid = gtid++;
 			}
-
 			icpu.core[j] = jcore;
 		}
 		mach.cpu[i] = icpu;
@@ -100,7 +98,9 @@ thread_t* get_thread(int tid) {
 	int k = tid % nth;			  // Thread nº
 
 	thread_t* out = &mach.cpu[i].core[j].thread[k];
-	printf("%smachine    %s>>   Address found for thread %d, core %d, cpu %d; (tid = %d). Located at %p\n", C_BMAG, C_RESET, k, j, i, tid, out);
+	printf("%smachine    %s>>   Address found for thread %d, core %d, cpu %d; (tid = %d).\
+		 Located at %p\n",\
+		 C_BMAG, C_RESET, k, j, i, tid, out);
 
 	return out;
 }
@@ -108,7 +108,8 @@ thread_t* get_thread(int tid) {
 
 // Quantum subtraction for all processes
 void subtract_quantum() {
-	printf("%smachine    %s>>   Subtracting quantum for all active processes...\n", C_BMAG, C_RESET);
+	printf("%smachine    %s>>   Subtracting quantum for all active processes...\n",\
+		 C_BMAG, C_RESET);
 
 	for (int i = 0; i < ncpu; i++) {
 		for (int j = 0; j < ncores; j++){
@@ -127,7 +128,8 @@ void subtract_quantum() {
 
 // Compile processed threads into stack
 void quantum_compiler() {
-	printf("%smachine    %s>>   Compiling timed out quantums...\n", C_BMAG, C_RESET);
+	printf("%smachine    %s>>   Compiling timed out quantums...\n",\
+		 C_BMAG, C_RESET);
 
 	for (int i = 0; i < ncpu; i++) {
 		for (int j = 0; j < ncores; j++){

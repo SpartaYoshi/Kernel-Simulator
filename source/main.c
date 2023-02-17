@@ -50,45 +50,56 @@ static int getch(void) {
 int main(int argc, char *argv[]) {
 
 	// Parameter assigning
-	printf("%sIndicate number of CPUs. %s(MAX = %d): %s", C_BYEL, C_YEL, MAX_CPUS, C_RESET);
+	printf("%sIndicate number of CPUs. %s(MAX = %d): %s",\
+		 C_BYEL, C_YEL, MAX_CPUS, C_RESET);
 	scanf("%d", &ncpu);
 	while (ncpu < 1 || ncpu > MAX_CPUS) {
-		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s", C_BRED, C_RESET, C_BWHT, C_RESET);
+		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s",\
+			 C_BRED, C_RESET, C_BWHT, C_RESET);
 		scanf("%d", &ncpu);
 	}
 
-	printf("%sIndicate number of cores (per CPU). %s(MAX = %d): %s", C_BYEL, C_YEL, MAX_CORES, C_RESET);
+	printf("%sIndicate number of cores (per CPU). %s(MAX = %d): %s",\
+		 C_BYEL, C_YEL, MAX_CORES, C_RESET);
 	scanf("%d", &ncores);
 	while (ncores < 1 || ncores > MAX_CORES) {
-		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s", C_BRED, C_RESET, C_BWHT, C_RESET);
+		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s",\
+			 C_BRED, C_RESET, C_BWHT, C_RESET);
 		scanf("%d", &ncores);
 	}
 
-	printf("%sIndicate number of active threads (per core) %s(MAX = %d): %s", C_BYEL, C_YEL, MAX_THREADS, C_RESET);
+	printf("%sIndicate number of active threads (per core) %s(MAX = %d): %s",\
+		 C_BYEL, C_YEL, MAX_THREADS, C_RESET);
 	scanf("%d", &nth);
 	while (nth < 1 || nth > MAX_THREADS) {
-		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s", C_BRED, C_RESET, C_BWHT, C_RESET);
+		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s",\
+			 C_BRED, C_RESET, C_BWHT, C_RESET);
 		scanf("%d", &nth);
 	}
 
 	printf("%sIndicate frequency (cycles per tick): %s", C_BYEL, C_RESET);
 	scanf("%d", &freq);
 	while (freq < 1) {
-		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s", C_BRED, C_RESET, C_BWHT, C_RESET);
+		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s",\
+			 C_BRED, C_RESET, C_BWHT, C_RESET);
 		scanf("%d", &freq);
 	}
 
-	printf("%sIndicate scheduling policy. %s(0 = FCFS, 1 = Round Robin): %s", C_BYEL, C_YEL, C_RESET);
+	printf("%sIndicate scheduling policy. %s(0 = FCFS, 1 = Round Robin): %s",\
+		 C_BYEL, C_YEL, C_RESET);
 	scanf("%d", &policy);
 	while (policy < POL_FCFS || policy > POL_RR) {
-		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s", C_BRED, C_RESET, C_BWHT, C_RESET);
+		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s",\
+			 C_BRED, C_RESET, C_BWHT, C_RESET);
 		scanf("%d", &policy);
 	}
 
-	printf("%sIndicate process mode. %s(0 = Loader, 1 = Process generation): %s", C_BYEL, C_YEL, C_RESET);
+	printf("%sIndicate process mode. %s(0 = Loader, 1 = Process generation): %s",\
+		 C_BYEL, C_YEL, C_RESET);
 	scanf("%d", &p_mode);
 	while (p_mode < POL_FCFS || p_mode > POL_RR) {
-		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s", C_BRED, C_RESET, C_BWHT, C_RESET);
+		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s",\
+			 C_BRED, C_RESET, C_BWHT, C_RESET);
 		scanf("%d", &p_mode);
 	}
 
@@ -135,12 +146,14 @@ int main(int argc, char *argv[]) {
 
 	switch(p_mode){
 		case MOD_LOADER:
-			pthread_create(&timer_loader_o, NULL, (void *) timer_loader, NULL);
+			pthread_create(&timer_loader_o, NULL, (void *) timer_loader,\
+				 NULL);
 			pthread_create(&loader_o, NULL, (void *) kloader, NULL);
 		break;
 		
 		case MOD_PROCGEN:
-			pthread_create(&timer_procgen_o, NULL, (void *) timer_procgen, NULL);
+			pthread_create(&timer_procgen_o, NULL, (void *) timer_procgen,\
+				 NULL);
 			pthread_create(&procgen_o, NULL, (void *) kprocgen, NULL);
 		break;
 
@@ -151,7 +164,8 @@ int main(int argc, char *argv[]) {
 
 	// Kernel simulation.
 	sleep(2); // To force print after thread init
-	printf("\n%sThe kernel has been successfully initialized. Press %sSPACE%s to start!%s\n", C_BBLU, C_BYEL, C_BBLU, C_RESET);
+	printf("\n%sThe kernel has been successfully initialized. Press %sSPACE%s to start!%s\n",\
+		 C_BBLU, C_BYEL, C_BBLU, C_RESET);
 	while (getch() != KEY_SPC);
 
 	printf("\n%sStarting...%s\n", C_BHRED, C_RESET);
