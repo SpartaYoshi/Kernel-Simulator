@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#include "../include/global.h"
+#include "../include/commons.h"
 #include "../include/machine.h"
 #include "../include/clock.h"
 #include "../include/ansi.h"
@@ -28,7 +28,6 @@ void timer_sched() {
 	bool stacked_th = false;
 	
 	while(!kernel_start);
-	sleep(1); // Force clock to go first
 
 	pthread_mutex_lock(&clock_mtx);
 	pthread_mutex_lock(&sched_mtx);

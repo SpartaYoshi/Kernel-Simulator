@@ -1,0 +1,14 @@
+- tema de cómo conseguir Round Robin con lo la movida de las queues
+- preguntar si está bien hecho tema de memoria
+
+- cómo montar el loader
+
+
+
+
+
+---------------------------------------
+-rehacer enqueue y dequeue para shiftear los punteros de sitio, en vez de usar front y rear.
+-cuando se crea un proceso o se para, en vez de colocarlo al final y luego reordenarlo, directamente colocarlo en el sitio que le corresponde.
+
+-la memoria ocupa 2^24 bytes, pero se leen de 4 en 4

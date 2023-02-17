@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../include/global.h"
+#include "../include/commons.h"
 #include "../include/ansi.h"
 
 // Declaration

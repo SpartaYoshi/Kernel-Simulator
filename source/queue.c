@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "../include/global.h"
+#include "../include/commons.h"
 
 process_queue_t idle_queue;
 pcb_t nullp = {NULL, -1, PRSTAT_IDLE, 140, 0, 0};

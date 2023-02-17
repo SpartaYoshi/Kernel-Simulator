@@ -1,7 +1,8 @@
-#ifndef GLOBAL_H
-#define GLOBAL_H
+#ifndef COMMONS_H
+#define COMMONS_H
 
 #include <pthread.h>
+#include <stdint.h>
 #include <sys/types.h>
 
 
@@ -32,6 +33,9 @@
 #define POL_FCFS  0
 #define POL_RR    1
 
+#define MOD_LOADER  0
+#define MOD_PROCGEN 1
+
 // Macros (for thread stack)
 #define push(sp, n) (*((sp)++) = (n))
 #define pop(sp)     (*--(sp))
@@ -51,13 +55,10 @@ extern int kernel_start;
 // Stuctures //
 ///////////////
 
-// Alias
-typedef unsigned long dword;  // 4 byte word (32 bits) for memory
-
 // Translation Lookaside Buffer (TLB)
 typedef struct {
-	dword virtual_adr;
-	dword physical_adr;
+	uint32_t virtual_adr;
+	uint32_t physical_adr;
 } tlb_t;
 
 // Memory Management Unit (MMU)
@@ -67,19 +68,16 @@ typedef struct {
 
 // Memory Management Type
 typedef struct {
-	dword* code;
-	dword* data;
-	dword* pgb;
+	uint32_t code; // points to start of code segment
+	uint32_t data; // points to start of data segment
+	uint32_t pgb;  // points to page table physical address
 } mm_t;
 
-/*
 // Context for PCB
 typedef struct {
-	unsigned int pc; 	// Virtual address of next instruction
-	char* ir;		 	// Last instruction executed
-	mmu_t mem_mgr;
+	uint32_t pc; 	// Virtual address of next instruction
+	uint32_t ri;    // Last instruction executed
 } pcb_context_t;
-*/
 
 // Process Control Block (PCB)
 typedef struct _pcb { 
@@ -87,8 +85,9 @@ typedef struct _pcb {
 	pid_t         pid;
 	int           state;
 	int           priority;
-	unsigned int  quantum;
+	uint32_t	  quantum;
 	mm_t		  mm;
+	pcb_context_t context;
 } pcb_t;
 
 // Process Queue
@@ -99,14 +98,12 @@ typedef struct {
 
 // Thread
 typedef struct {
-	int			global_tid;
-	pthread_t   handle;
-	pcb_t*      proc;
-	char        proc_name[128];
-	dword		pc;
-	dword		ir;
-	dword*		ptbr;		
-	mmu_t		mmu;
+	int			 global_tid;
+	pthread_t    handle;
+	pcb_t*       proc;
+	char         proc_name[128];
+	uint32_t	 ptbr;		
+	mmu_t	     mmu;
 } thread_t;
 
 // Core

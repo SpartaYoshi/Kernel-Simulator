@@ -1,4 +1,4 @@
-#include "../include/global.h"
+#include "../include/commons.h"
 
 extern process_queue_t idle_queue; // Queue of waiting processes
 

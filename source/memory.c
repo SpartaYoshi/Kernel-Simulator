@@ -3,14 +3,14 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#include "../include/global.h"
+#include "../include/commons.h"
 #include "../include/ansi.h"
 
-dword* pmem;
+byte* pmem;
 size_t pmem_size;
 
 
 void init_memory() {
 	pmem_size = pow(2, MEMSIZE_BITS);
-	pmem = malloc(sizeof(dword) * pmem_size); // long = 4 bytes = word size
+	pmem = malloc(pmem_size); // long = 4 bytes = word size
 }

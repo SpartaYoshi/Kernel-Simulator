@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "../include/global.h"
+#include "../include/commons.h"
 #include "../include/clock.h"
 #include "../include/ansi.h"
 #include "../include/queue.h"
@@ -26,7 +26,6 @@ void timer_procgen() {
 	while(!kernel_start);
 
 	init_queue(&idle_queue);
-	sleep(1); // Force clock to go first
 
 	pthread_mutex_lock(&clock_mtx);
 	pthread_mutex_lock(&procgen_mtx);
@@ -66,7 +65,6 @@ void kprocgen() {
 			block->pid = ++pcbs_generated;
 			block->state = PRSTAT_IDLE;
 			block->priority = 20;
-			//block->context.PC = 0; // TODO: TBA
 			block->quantum = QUANTUM_DEFAULT;
 
 			// Link to dynamic list of processes

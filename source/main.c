@@ -5,13 +5,14 @@
 #include <termios.h>
 #include <string.h>
 
-#include "../include/global.h"
+#include "../include/commons.h"
 #include "../include/clock.h"
 #include "../include/sched.h"
 #include "../include/procgen.h"
 #include "../include/machine.h"
 #include "../include/ansi.h"
 #include "../include/memory.h"
+#include "../include/loader.h"
 
 #define KEY_ESC 0x001b
 #define KEY_SPC 0x0020
@@ -23,6 +24,7 @@ unsigned int nth;
 unsigned int freq;	// clock tick by hardware frequency
 int kernel_start = 0;
 int policy;
+int p_mode;
 
 // Non-canonical terminal mode
 static struct termios term, oterm;
@@ -83,17 +85,40 @@ int main(int argc, char *argv[]) {
 		scanf("%d", &policy);
 	}
 
+	printf("%sIndicate process mode. %s(0 = Loader, 1 = Process generation): %s", C_BYEL, C_YEL, C_RESET);
+	scanf("%d", &p_mode);
+	while (p_mode < POL_FCFS || p_mode > POL_RR) {
+		printf("%sERROR: %sInvalid configuration. %sPlease try another value: %s", C_BRED, C_RESET, C_BWHT, C_RESET);
+		scanf("%d", &p_mode);
+	}
+
+	
+
 
 	// Mutex and conditionals initialization
 	pthread_mutex_init(&clock_mtx, NULL);
 	pthread_mutex_init(&sched_mtx, NULL);
-	pthread_mutex_init(&procgen_mtx, NULL);
-	pthread_cond_init(&tickwork_cnd, NULL);
-	pthread_cond_init(&pending_cnd, NULL);
 	pthread_cond_init(&sched_run_cnd, NULL);
 	pthread_cond_init(&sched_exit_cnd, NULL);
-	pthread_cond_init(&procgen_run_cnd, NULL);
-	pthread_cond_init(&procgen_exit_cnd, NULL);
+
+	pthread_cond_init(&tickwork_cnd, NULL);
+	pthread_cond_init(&pending_cnd, NULL);
+
+	switch(p_mode){
+		case MOD_LOADER:
+			pthread_mutex_init(&loader_mtx, NULL);
+			pthread_cond_init(&loader_run_cnd, NULL);
+			pthread_cond_init(&loader_exit_cnd, NULL);
+		break;
+		
+		case MOD_PROCGEN:
+			pthread_mutex_init(&procgen_mtx, NULL);
+			pthread_cond_init(&procgen_run_cnd, NULL);
+			pthread_cond_init(&procgen_exit_cnd, NULL);
+		break;
+
+		default: break;
+	}
 
 
 	// Hardware initialization
@@ -102,11 +127,25 @@ int main(int argc, char *argv[]) {
 	pthread_t timer_sched_o;
 	pthread_create(&timer_sched_o, NULL, (void *) timer_sched, NULL);
 	pthread_t timer_procgen_o;
-	pthread_create(&timer_procgen_o, NULL, (void *) timer_procgen, NULL);
+	pthread_t timer_loader_o;
 	pthread_t sched_o;
 	pthread_create(&sched_o, NULL, (void *) ksched_disp, NULL);
 	pthread_t procgen_o;
-	pthread_create(&procgen_o, NULL, (void *) kprocgen, NULL);
+	pthread_t loader_o;
+
+	switch(p_mode){
+		case MOD_LOADER:
+			pthread_create(&timer_loader_o, NULL, (void *) timer_loader, NULL);
+			pthread_create(&loader_o, NULL, (void *) kloader, NULL);
+		break;
+		
+		case MOD_PROCGEN:
+			pthread_create(&timer_procgen_o, NULL, (void *) timer_procgen, NULL);
+			pthread_create(&procgen_o, NULL, (void *) kprocgen, NULL);
+		break;
+
+		default: break;
+	}
 
 	init_machine();
 	init_memory();
@@ -116,8 +155,10 @@ int main(int argc, char *argv[]) {
 	printf("\n%sThe kernel has been successfully initialized. Press %sSPACE%s to start!%s\n", C_BBLU, C_BYEL, C_BBLU, C_RESET);
 	while (getch() != KEY_SPC);
 
-	kernel_start = 1;
 	printf("\n%sStarting...%s\n", C_BHRED, C_RESET);
+	sleep(1); // Time for user to read
+	kernel_start = 1;
+
 
 	while (1) {
 		fflush(stdout);
