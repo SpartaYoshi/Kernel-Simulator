@@ -14,7 +14,7 @@
 #include <time.h>
 #include <string.h>
 
-#include "defines.h"
+#include "../include/defines.h"
 
 struct configuration_t conf;
 

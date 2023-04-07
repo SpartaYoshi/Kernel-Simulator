@@ -21,6 +21,8 @@
 #define TLB_CAPACITY       6
 #define QUANTUM_DEFAULT   40
 
+#define NPROGRAMS 13
+
 
 // States
 #define MACH_OFF   0
@@ -75,8 +77,9 @@ typedef struct {
 
 // Context for PCB
 typedef struct {
-	uint32_t pc; 	// Virtual address of next instruction
-	uint32_t ri;    // Last instruction executed
+	char prog_name[128]; 	// Name of elf file
+	uint32_t pc; 		 	// Virtual address of next instruction
+	uint32_t ri;    		// Last instruction executed
 } pcb_context_t;
 
 // Process Control Block (PCB)
@@ -101,7 +104,6 @@ typedef struct {
 	int			   global_tid;
 	pthread_t      handle;
 	pcb_t*         proc;
-	char           proc_name[128];
 	uint8_t*	   ptbr;
 	mmu_t	       mmu;
 	pcb_context_t* context;

@@ -1,23 +1,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "../include/ansi.h"
 #include "../include/clock.h"
 #include "../include/commons.h"
+#include "../include/loader.h"
 #include "../include/memory.h"
 #include "../include/queue.h"
-
 
 pthread_mutex_t loader_mtx;
 pthread_cond_t loader_run_cnd;
 pthread_cond_t loader_exit_cnd;
 
-
 pcb_t* head_l;
 int pcbs_generated_l = 0;
-
+int elfi = 0;
+int _;
 
 // Timer for loader
 void timer_loader() {
@@ -81,11 +82,53 @@ void kloader() {
 
 			// Reserve page table in memory
 			block->mm.pgb = create_page_table();
+			
+			// Load program into memory
+			sprintf(block->context->prog_name, "./programs/elfs/prog%03d.elf", elfi);
+			_ = boot_elf(block);
+			elfi = (elfi + 1) % NPROGRAMS; 
 
-			printf("%sloader    %s>>   Process %d successfully generated. Located at %p\n",\
-				 C_BYEL, C_RESET, block->pid, block);
+			if (_ == 0)
+				printf("%sloader    %s>>   Process %d successfully generated. Located at %p\n",\
+					 C_BYEL, C_RESET, block->pid, block);
 		}
 		
 		pthread_cond_signal(&loader_exit_cnd);
 	}
+}
+
+int boot_elf(pcb_t *proc){
+	FILE *fp;
+	char line[16];
+	int _;
+
+	#define HEADER 12*2+2
+	#define CHAR_PER_LINE 8+1
+
+	
+	fp = fopen(proc->context->prog_name, "r");
+	
+	if (fp == NULL) {
+		printf("%sERROR: %sFile could not be opened. \n", C_BRED, C_RESET);
+		return 1;
+	}
+
+	_ = fscanf(fp, "%s %X", line, &proc->mm.code);
+	if (_ != 2) {
+		printf("%sERROR: %sFile could not be read: Wrong format. \n", C_BRED, C_RESET);
+		fclose(fp);
+		return 1;
+	}
+
+	_ = fscanf(fp, "%s %X", line, &proc->mm.data);
+	if (_ != 2) {
+		printf("%sERROR: %sFile could not be read: Wrong format. \n", C_BRED, C_RESET);
+		fclose(fp);
+		return 1;
+	}	
+
+	
+
+
+	return 0;
 }
