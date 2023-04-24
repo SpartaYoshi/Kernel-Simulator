@@ -18,7 +18,7 @@ pthread_cond_t loader_exit_cnd;
 pcb_t* head_l;
 int pcbs_generated_l = 0;
 int elfi = 0;
-int _;
+
 
 // Timer for loader
 void timer_loader() {
@@ -51,8 +51,10 @@ void timer_loader() {
 	}
 }
 
+
 // Loader
 void kloader() {
+	int _;
 	printf("%sInitiated:%s Loader\n", C_BCYN, C_RESET);
 
 	while(!kernel_start);
@@ -89,46 +91,66 @@ void kloader() {
 			elfi = (elfi + 1) % NPROGRAMS; 
 
 			if (_ == 0)
-				printf("%sloader    %s>>   Process %d successfully generated. Located at %p\n",\
-					 C_BYEL, C_RESET, block->pid, block);
+				printf("%sloader    %s>>   Process %d successfully generated. Located at %p\n",
+					C_BYEL, C_RESET, block->pid, block);
 		}
 		
 		pthread_cond_signal(&loader_exit_cnd);
 	}
 }
 
+
 int boot_elf(pcb_t *proc){
 	FILE *fp;
 	char line[16];
 	int _;
+	uint32_t dword;
 
 	#define HEADER 12*2+2
 	#define CHAR_PER_LINE 8+1
 
-	
+	// Open file	
 	fp = fopen(proc->context->prog_name, "r");
-	
 	if (fp == NULL) {
-		printf("%sERROR: %sFile could not be opened. \n", C_BRED, C_RESET);
+		printf("%sloader    %s>>   %sERROR: %sFile could not be opened. \n",
+			C_BYEL, C_RESET, C_BRED, C_RESET);
 		return 1;
 	}
+	// TODO RELLENAR PAGE TABLE
 
+
+	// Get virtual addresses for code
 	_ = fscanf(fp, "%s %X", line, &proc->mm.code);
 	if (_ != 2) {
-		printf("%sERROR: %sFile could not be read: Wrong format. \n", C_BRED, C_RESET);
+		printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
+			C_BYEL, C_RESET, C_BRED, C_RESET);
 		fclose(fp);
 		return 1;
 	}
+	// TODO RELLENAR PAGE TABLE
 
+	// Get virtual addresses for data
 	_ = fscanf(fp, "%s %X", line, &proc->mm.data);
 	if (_ != 2) {
-		printf("%sERROR: %sFile could not be read: Wrong format. \n", C_BRED, C_RESET);
+		printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
+			C_BYEL, C_RESET, C_BRED, C_RESET);
 		fclose(fp);
 		return 1;
 	}	
 
-	
+	// Copy to memory
+	while (!feof(fp)){
+		_ = fscanf(fp, "%X", &physical[nfi++]);
+		if (_ != 2) {
+			printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
+				C_BYEL, C_RESET, C_BRED, C_RESET);
+			fclose(fp);
+			return 1;
+		}
 
+		proc->mm.mem_length++;
+	}
+	fclose(fp);
 
 	return 0;
 }

@@ -7,6 +7,10 @@
 #define PAGE_TABLE_SIZE 16
 
 void init_memory();
-uint8_t * create_page_table();
+uint32_t * create_page_table();
+
+extern uint32_t * physical; 	    // Physical memory. Size = 2²⁴ bytes
+extern uint32_t  kernel_nfi;	// Index to next free space in kernel-owned memory
+extern uint32_t  nfi;           // Index to next free space in memory
 
 #endif
