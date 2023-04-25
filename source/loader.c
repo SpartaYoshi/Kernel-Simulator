@@ -104,7 +104,7 @@ int boot_elf(pcb_t *proc){
 	FILE *fp;
 	char line[16];
 	int _;
-	uint32_t dword;
+	uint32_t word;
 
 	#define HEADER 12*2+2
 	#define CHAR_PER_LINE 8+1
@@ -140,15 +140,18 @@ int boot_elf(pcb_t *proc){
 
 	// Copy to memory
 	while (!feof(fp)){
-		_ = fscanf(fp, "%X", &physical[nfi++]);
-		if (_ != 2) {
+		// Scan for word (4 bytes)
+		_ = fscanf(fp, "%X", &word);
+		if (_ != 1) {
 			printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
 				C_BYEL, C_RESET, C_BRED, C_RESET);
 			fclose(fp);
 			return 1;
 		}
 
-		proc->mm.mem_length++;
+		// Copy 4 bytes to physical[nfi]
+    	memcpy(&physical[nfi], &word, sizeof(uint32_t));
+    	nfi = proc->mm.mem_length += 4;
 	}
 	fclose(fp);
 

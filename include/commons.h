@@ -72,7 +72,7 @@ typedef struct {
 typedef struct {
 	uint32_t  code;       // points to start of code segment
 	uint32_t  data;       // points to start of data segment
-	uint32_t* pgb;        // points to page table physical address
+	uint8_t*  pgb;        // points to page table physical address
 	uint32_t  mem_length; // how many positions do code and data occupy in memory
 } mm_t;
 
@@ -105,7 +105,7 @@ typedef struct {
 	int			   global_tid;
 	pthread_t      handle;
 	pcb_t*         proc;
-	uint32_t*	   ptbr;
+	uint8_t*	   ptbr;
 	mmu_t	       mmu;
 	pcb_context_t* context;
 } thread_t;
