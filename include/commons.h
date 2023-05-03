@@ -63,6 +63,19 @@ typedef struct {
 	uint32_t phys_adr; // frame
 } tlb_t;
 
+// Page Table Entry (PTE) (32 bytes - uint32_t)
+typedef struct {
+    uint32_t frame_address : 24; // frame number
+    uint32_t reserved : 1; 		 // unused
+	uint32_t perms : 3;          // protection bits: rwx
+    uint32_t dirty : 1;  		 // 1 if page has been modified
+	uint32_t accessed : 1;       // 1 if page has been accessed
+	uint32_t present : 1;		 // 1 if it's present in physical memory
+	uint32_t valid : 1;          // 1 if entry is valid
+
+} pte_t;
+
+
 // Memory Management Unit (MMU)
 typedef struct {
 	tlb_t tlb[TLB_CAPACITY];
@@ -72,7 +85,7 @@ typedef struct {
 typedef struct {
 	uint32_t  code;       // points to start of code segment
 	uint32_t  data;       // points to start of data segment
-	uint8_t*  pgb;        // points to page table physical address
+	pte_t*    pgb;        // points to page table physical address
 	uint32_t  mem_length; // how many positions do code and data occupy in memory
 } mm_t;
 
@@ -105,7 +118,7 @@ typedef struct {
 	int			   global_tid;
 	pthread_t      handle;
 	pcb_t*         proc;
-	uint8_t*	   ptbr;
+	pte_t*	       ptbr;
 	mmu_t	       mmu;
 	pcb_context_t* context;
 } thread_t;
@@ -133,6 +146,14 @@ typedef struct {
 	thread_t*  stack[MAX_THREADS * MAX_CORES * MAX_CPUS];
 	thread_t** sp;
 	int        size;
-}thread_stack_t;
+} thread_stack_t;
+
+// Pointers to next free slot (List of free space in memory)
+typedef struct _nfsp_t {
+	struct _nfsp_t * prev;
+	struct _nfsp_t * next;
+	uint32_t  address;
+	uint32_t  length;
+} nfsp_t;
 
 #endif

@@ -74,7 +74,7 @@ void shutdown_machine() {
 void init_core_thread(core_t* core, thread_t* thread, void* start_routine, char* proc_name) { // UNUSED YET
 	strcpy(thread->proc_name,proc_name);
 
-	//pthread_create(&thread->handle, NULL, start_routine, (void *) &core);
+	pthread_create(&thread->handle, NULL, start_routine, (void *) &core);
 	
 	printf("Initiated thread %d: %s \n", core->thread_count, proc_name);
 	core->thread_count++;
@@ -85,7 +85,7 @@ void init_core_thread(core_t* core, thread_t* thread, void* start_routine, char*
 thread_t* find_thread(core_t* core, char* proc_name) {
 	thread_t* thread = NULL;
 	for (int i = 0; i < MAX_THREADS; i++)
-		if (strcmp(core->thread[i].proc_name, proc_name) == 0){
+		if (strcmp(core->thread[i].proc->context->prog_name, proc_name) == 0){
 			thread = &core->thread[i];
 			break;
 		}
@@ -146,4 +146,10 @@ void quantum_compiler() {
 			}
 		}
 	}
+}
+
+
+// All busy processes execute an instruction (per clock tick)
+void execute(){
+	
 }

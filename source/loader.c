@@ -71,7 +71,8 @@ void kloader() {
 			pcb_t* block = (pcb_t *) malloc(sizeof(pcb_t));
 			block->pid = ++pcbs_generated_l;
 			block->state = PRSTAT_IDLE;
-			block->priority = 20;
+			srand(time(NULL));
+			block->priority = rand() % 139;
 			block->quantum = QUANTUM_DEFAULT;
 			block->context = (pcb_context_t *) malloc(sizeof(pcb_context_t));
 
