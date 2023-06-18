@@ -7,4 +7,4 @@ extern pthread_cond_t loader_exit_cnd;
 
 void timer_loader();
 void kloader();
-int boot_elf(pcb_t *block);
+int boot_elf(thread_t * th);

@@ -87,21 +87,23 @@ void ksched_disp() {
 	while(1) {
 		pthread_cond_wait(&sched_run_cnd, &sched_mtx);
 
-		pcb_t* current_pcb = NULL;
-		
+		pcb_t* current_pcb = NULL; // start from blank
 
 		// If there are free threads, select the next free one
 		if (tid < (nth * ncores * ncpu)) {
 			printf("%sscheduler  %s>>   Preparing thread %d...\n", C_BBLU, C_RESET, tid);
 			thread_selected = get_thread(tid);
-			// NEW_PROCESS = schedule()
+			current_pcb = schedule(); // assign process to thread
+			printf("%sscheduler  %s>>   Assigned process %d to thread %d. Located at %p\n",\
+			 C_BBLU, C_RESET, current_pcb->pid, tid, current_pcb);
+
 			tid++;
 		}
 
 		// If all threads are busy and the stack has found a thread to switch context
 		else if (thread_selected) {
 			current_pcb = thread_selected->proc;
-			// REPLACEMENT = schedule()
+			// REPLACEMENT = schedule() // line down below
 			printf("%sscheduler  %s>>   Process %d has timed out in thread %d.\
 				 Located at %p\n",\
 				 C_BBLU, C_RESET, current_pcb->pid, thread_selected->global_tid, current_pcb);

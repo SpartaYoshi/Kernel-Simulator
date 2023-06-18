@@ -42,7 +42,7 @@ pte_t * create_page_table() {
 	
 	// Finished checking. If still nothing, exit
 	if (nfsp == NULL)  					 				 return NULL;
-	if (nfsp->length < PAGE_TABLE_SIZE * sizeof(pte_t))  return NULL;
+	if (nfsp->length < PAGE_TABLE_SIZE * sizeof(pte_t))  return NULL; 
 	
 	// Get address of space = ptbr
 	pte_t* ptbr = (pte_t *) &physical[nfsp->address];
@@ -60,6 +60,32 @@ pte_t * create_page_table() {
 	return ptbr;
 }
 
+// Alloc free space
+uint32_t alloc_page(){
+	// Check for free space
+	nfsp_t* nfsp = free_space;
+	while(nfsp->length < PAGE_SIZE && nfsp->next != NULL)
+		nfsp = nfsp->next;
+	
+	// Finished checking. If still nothing, exit
+	if (nfsp == NULL)  			   return -1;
+	if (nfsp->length < PAGE_SIZE)  return -1;
+	
+	// Get address of space = ptbr
+	uint32_t addr = nfsp->address;
+	
+	// Update slot
+	nfsp->length  -= PAGE_SIZE; // Reduce size
+	if (nfsp->length <= 0){							  // Pop & delete if no more space left
+		nfsp->prev->next = nfsp->next;
+		nfsp->next->prev = nfsp->prev;
+		free(nfsp);
+	} else {
+		nfsp->address += PAGE_SIZE; 
+	}
+
+	return addr;
+}
 
 uint32_t memread(uint32_t address){
 	uint32_t word;
@@ -76,4 +102,27 @@ void memwrite(uint32_t address, uint32_t data){
 	physical[address + 2] = ((data & 0x0000FF00) >>  8);
 	physical[address + 1] = ((data & 0x00FF0000) >> 16);
 	physical[address + 0] = ((data & 0xFF000000) >> 24);
+}
+
+
+void insert_frame(thread_t * th, uint32_t physadr){
+	uint32_t nPag = th->proc->mm.pt_entries++ - 1;
+	th->ptbr[nPag].frame_address = physadr;
+}
+
+uint32_t get_frame(thread_t * th, uint32_t nPag){
+	return th->ptbr[nPag].frame_address;
+}
+
+uint32_t translate(thread_t * th, uint32_t logicadr){
+	uint32_t nPag = logicadr >> OFFSET_LEN;
+
+	// Check TLB cache
+	int i;
+	for (i = 0; i < TLB_CAPACITY; i++)
+		if (th->mmu.tlb[i].nPag == nPag)
+			return th->mmu.tlb[i].nFrame; // hit = immediate return
+
+	// Miss. Consult memory
+	return get_frame(th, nPag);
 }

@@ -85,6 +85,7 @@ void kloader() {
 
 			// Reserve page table in memory
 			block->mm.pgb = create_page_table();
+			block->mm.pt_entries = 0;
 			
 			// Load program into memory
 			sprintf(block->context->prog_name, "./programs/elfs/prog%03d.elf", elfi);
@@ -101,37 +102,35 @@ void kloader() {
 }
 
 
-int boot_elf(pcb_t *proc){
+int boot_elf(thread_t * th){
 	FILE *fp;
 	char line[16];
-	int _;
+	int _, bytes_loaded;
 	uint32_t word;
+	uint32_t address;
 
 	#define HEADER 12*2+2
 	#define CHAR_PER_LINE 8+1
 
 	// Open file	
-	fp = fopen(proc->context->prog_name, "r");
+	fp = fopen(th->proc->context->prog_name, "r");
 	if (fp == NULL) {
 		printf("%sloader    %s>>   %sERROR: %sFile could not be opened. \n",
 			C_BYEL, C_RESET, C_BRED, C_RESET);
 		return 1;
 	}
-	// TODO RELLENAR PAGE TABLE
-
 
 	// Get virtual addresses for code
-	_ = fscanf(fp, "%s %X", line, &proc->mm.code);
+	_ = fscanf(fp, "%s %X", line, &th->proc->mm.code);
 	if (_ != 2) {
 		printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
 			C_BYEL, C_RESET, C_BRED, C_RESET);
 		fclose(fp);
 		return 1;
 	}
-	// TODO RELLENAR PAGE TABLE
 
 	// Get virtual addresses for data
-	_ = fscanf(fp, "%s %X", line, &proc->mm.data);
+	_ = fscanf(fp, "%s %X", line, &th->proc->mm.data);
 	if (_ != 2) {
 		printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
 			C_BYEL, C_RESET, C_BRED, C_RESET);
@@ -140,6 +139,7 @@ int boot_elf(pcb_t *proc){
 	}	
 
 	// Copy to memory
+	bytes_loaded = PAGE_SIZE;  // to activate first alloc. logically it should be 0
 	while (!feof(fp)){
 		// Scan for word (4 bytes)
 		_ = fscanf(fp, "%X", &word);
@@ -151,8 +151,14 @@ int boot_elf(pcb_t *proc){
 		}
 
 		// Copy 4 bytes to physical[nfi]
-    	memcpy(&physical[nfi], &word, sizeof(uint32_t));
-    	nfi = proc->mm.mem_length += 4;
+		if (bytes_loaded == PAGE_SIZE) {
+			address = alloc_page();	// alloc new page in memory
+			bytes_loaded = 0;
+			insert_frame(th, address);
+
+		}
+    	memwrite(address + bytes_loaded, word);
+		bytes_loaded += 4;
 	}
 	fclose(fp);
 

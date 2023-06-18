@@ -103,8 +103,6 @@ int main(int argc, char *argv[]) {
 		scanf("%d", &p_mode);
 	}
 
-	
-
 
 	// Mutex and conditionals initialization
 	pthread_mutex_init(&clock_mtx, NULL);

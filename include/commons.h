@@ -59,8 +59,8 @@ extern int kernel_start;
 
 // Translation Lookaside Buffer Entry (TLB)
 typedef struct {
-	uint32_t virt_adr; // page
-	uint32_t phys_adr; // frame
+	uint32_t nPag; // page
+	uint32_t nFrame; // frame
 } tlb_t;
 
 // Page Table Entry (PTE) (32 bytes - uint32_t)
@@ -86,6 +86,7 @@ typedef struct {
 	uint32_t  code;       // points to start of code segment
 	uint32_t  data;       // points to start of data segment
 	pte_t*    pgb;        // points to page table physical address
+	int       pt_entries; // page table entries
 	uint32_t  mem_length; // how many positions do code and data occupy in memory
 } mm_t;
 
