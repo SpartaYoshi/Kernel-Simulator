@@ -89,7 +89,7 @@ void kloader() {
 			
 			// Load program into memory
 			sprintf(block->context->prog_name, "./programs/elfs/prog%03d.elf", elfi);
-			_ = boot_elf(block);
+			_ = load_elf(block);
 			elfi = (elfi + 1) % NPROGRAMS; 
 
 			if (_ == 0)
@@ -102,7 +102,7 @@ void kloader() {
 }
 
 
-int boot_elf(thread_t * th){
+int load_elf(pcb_t * proc){
 	FILE *fp;
 	char line[16];
 	int _, bytes_loaded;
@@ -113,7 +113,7 @@ int boot_elf(thread_t * th){
 	#define CHAR_PER_LINE 8+1
 
 	// Open file	
-	fp = fopen(th->proc->context->prog_name, "r");
+	fp = fopen(proc->context->prog_name, "r");
 	if (fp == NULL) {
 		printf("%sloader    %s>>   %sERROR: %sFile could not be opened. \n",
 			C_BYEL, C_RESET, C_BRED, C_RESET);
@@ -121,7 +121,7 @@ int boot_elf(thread_t * th){
 	}
 
 	// Get virtual addresses for code
-	_ = fscanf(fp, "%s %X", line, &th->proc->mm.code);
+	_ = fscanf(fp, "%s %X", line, &proc->mm.code);
 	if (_ != 2) {
 		printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
 			C_BYEL, C_RESET, C_BRED, C_RESET);
@@ -130,7 +130,7 @@ int boot_elf(thread_t * th){
 	}
 
 	// Get virtual addresses for data
-	_ = fscanf(fp, "%s %X", line, &th->proc->mm.data);
+	_ = fscanf(fp, "%s %X", line, &proc->mm.data);
 	if (_ != 2) {
 		printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
 			C_BYEL, C_RESET, C_BRED, C_RESET);
@@ -154,7 +154,7 @@ int boot_elf(thread_t * th){
 		if (bytes_loaded == PAGE_SIZE) {
 			address = alloc_page();	// alloc new page in memory
 			bytes_loaded = 0;
-			insert_frame(th, address);
+			insert_frame(proc, address);
 
 		}
     	memwrite(address + bytes_loaded, word);
@@ -162,5 +162,178 @@ int boot_elf(thread_t * th){
 	}
 	fclose(fp);
 
+	
+	// Begin context
+	proc->context->pc = 0x0;
+	proc->context->ri = 0x0;
+
 	return 0;
+}
+
+
+void execute(thread_t * th){
+	// Alias
+	uint32_t * pc = &th->context->pc;
+	uint32_t * ri = &th->context->ri;
+	uint32_t * rf = th->context->rf;
+	uint16_t * cc = &th->context->cc;
+
+
+	// Fetch instruction
+	uint32_t iadr = translate(th, *pc); 
+	*ri = memread(iadr);
+	*pc += 4;
+
+
+	// Interpret
+	uint32_t cmd, rd, rs, rf1, rf2, addr;
+	cmd = (*ri & 0xF0000000) >> 28;  // C-------
+
+	switch(cmd){
+		// ld   rd,addr
+		case 0x0:        // CRAAAAAA
+			rd   = (*ri & 0x0F000000) >> 24;
+			addr = (*ri & 0x00FFFFFF);
+
+			rf[rd] = memread(translate(th, addr));
+		break;
+
+
+		// st   rs,addr
+		case 0x1:        // CRAAAAAA
+			rs   = (*ri & 0x0F000000) >> 24;
+			addr = (*ri & 0x00FFFFFF);
+
+			memwrite(translate(th, addr), rf[rs]);
+		break;
+
+		
+		// add  rd,rf1,rf2
+		case 0x2:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] + rf[rf2];
+		break;
+
+
+		// sub  rd,rf1,rf2
+		case 0x3:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] - rf[rf2];
+		break;
+
+
+		// mul  rd,rf1,rf2
+		case 0x4:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] * rf[rf2];
+		break;
+
+
+		// div  rd,rf1,rf2
+		case 0x5:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] / rf[rf2];
+		break;
+
+		
+		// and  rd,rf1,rf2
+		case 0x6:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] & rf[rf2];
+		break;
+
+
+		// or  rd,rf1,rf2
+		case 0x7:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] | rf[rf2];
+		break;
+
+		
+		// xor  rd,rf1,rf2
+		case 0x8:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] ^ rf[rf2];
+		break;
+
+
+		// mov  rd,rs
+		case 0x9:      // CRR-----
+			rd = (*ri & 0x0F000000) >> 24;
+			rs = (*ri & 0x00F00000) >> 20;
+			
+			rf[rd] = rf[rs];
+		break;
+
+
+		// cmp  rf1,rf2
+		case 0xA:      // CRR-----
+			rf1 = (*ri & 0x0F000000) >> 24;
+			rf2 = (*ri & 0x00F00000) >> 20;
+			
+			*cc = rf[rf1] - rf[rf2];
+		break;
+
+
+		// b    addr
+		case 0xB:      // C-AAAAAA
+			addr = (*ri & 0x00FFFFFF);
+			
+			*pc = addr;
+		break;
+
+
+		// beq  addr
+		case 0xC:      // C-AAAAAA
+			addr = (*ri & 0x00FFFFFF);
+			
+			if(cc == 0)  *pc = addr;
+		break;
+
+
+		// bgt  addr
+		case 0xD:      // C-AAAAAA
+			addr = (*ri & 0x00FFFFFF);
+			
+			if (cc > 0)  *pc = addr;
+		break;
+
+
+		// blt  addr
+		case 0xE:      // C-AAAAAA
+			addr = (*ri & 0x00FFFFFF);
+			
+			if (cc < 0)  *pc = addr;
+		break;
+
+
+		// exit
+		case 0xF:      // C-------
+			// raise flag for process unloading - free thread
+		break;
+		
+	}
+	
+
 }

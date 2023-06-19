@@ -8,6 +8,7 @@
 #define PAGE_TABLE_SIZE 16
 #define PAGE_SIZE 4096 // 4KB pages - 4096 pages
 #define OFFSET_LEN 12 
+#define OFFSET_MASK 0xFFF
 
 void init_memory();
 pte_t * create_page_table();
@@ -19,5 +20,5 @@ void memwrite(uint32_t address, uint32_t data);
 uint32_t alloc_page();
 
 uint32_t translate(thread_t * th, uint32_t logicadr);
-void insert_frame(thread_t * th, uint32_t physadr);
+void insert_frame(pcb_t * proc, uint32_t physadr);
 #endif

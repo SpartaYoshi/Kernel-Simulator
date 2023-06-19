@@ -95,6 +95,8 @@ typedef struct {
 	char prog_name[128]; 	// Name of elf file
 	uint32_t pc; 		 	// Virtual address of next instruction
 	uint32_t ri;    		// Last instruction executed
+	uint32_t rf[16];		// Register file
+	uint16_t cc;            // Condition code (simplified version of FLAGS register)
 } pcb_context_t;
 
 // Process Control Block (PCB)

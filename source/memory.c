@@ -105,24 +105,25 @@ void memwrite(uint32_t address, uint32_t data){
 }
 
 
-void insert_frame(thread_t * th, uint32_t physadr){
-	uint32_t nPag = th->proc->mm.pt_entries++ - 1;
-	th->ptbr[nPag].frame_address = physadr;
+void insert_frame(pcb_t * proc, uint32_t physadr){
+	uint32_t nPag = proc->mm.pt_entries++; // - 1
+	proc->mm.pgb[nPag].frame_address = physadr;
 }
 
-uint32_t get_frame(thread_t * th, uint32_t nPag){
-	return th->ptbr[nPag].frame_address;
+uint32_t get_frame(pcb_t * proc, uint32_t nPag){
+	return proc->mm.pgb[nPag].frame_address;
 }
 
 uint32_t translate(thread_t * th, uint32_t logicadr){
-	uint32_t nPag = logicadr >> OFFSET_LEN;
+	uint32_t offset = logicadr & OFFSET_MASK;
+	uint32_t nPag   = logicadr >> OFFSET_LEN;
 
 	// Check TLB cache
 	int i;
 	for (i = 0; i < TLB_CAPACITY; i++)
 		if (th->mmu.tlb[i].nPag == nPag)
-			return th->mmu.tlb[i].nFrame; // hit = immediate return
+			return (th->mmu.tlb[i].nFrame << OFFSET_LEN) | offset; // hit = immediate return
 
 	// Miss. Consult memory
-	return get_frame(th, nPag);
+	return (get_frame(th->proc, nPag) << OFFSET_LEN) | offset;
 }
