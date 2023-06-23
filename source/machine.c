@@ -48,6 +48,8 @@ void timer_machine() {
 			// Here, the loader takes action and the timer waits for it to finish
 		pthread_cond_wait(&machine_exit_cnd, &machine_mtx); 
 		
+								printf("TIMER MACHINE2\n");
+
 		// Signal to clock
 		pthread_cond_signal(&tickwork_cnd);
 		pthread_cond_wait(&pending_cnd, &clock_mtx);

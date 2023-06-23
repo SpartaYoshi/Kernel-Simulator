@@ -95,7 +95,7 @@ void ksched_disp() {
 		if (tid < (nth * ncores * ncpu)) {
 			printf("%sscheduler  %s>>   Preparing thread %d...\n", C_BBLU, C_RESET, tid);
 			thread_selected = get_thread(tid);
-			current_pcb = schedule(); // assign process to thread
+			// PROCESS = schedule() // assign process to thread. done below
 			printf("%sscheduler  %s>>   Assigned process %d to thread %d. Located at %p\n",\
 			 C_BBLU, C_RESET, current_pcb->pid, tid, current_pcb);
 
@@ -105,7 +105,7 @@ void ksched_disp() {
 		// If all threads are busy and the stack has found a thread to switch context
 		else if (thread_selected) {
 			current_pcb = thread_selected->proc;
-			// REPLACEMENT = schedule() // line down below
+			// REPLACEMENT = schedule() // done below
 			printf("%sscheduler  %s>>   Process %d has timed out in thread %d.\
 				 Located at %p\n",\
 				 C_BBLU, C_RESET, current_pcb->pid, thread_selected->global_tid, current_pcb);
@@ -119,22 +119,23 @@ void ksched_disp() {
 			continue;
 		}
 
+
+		// ------------
+
 		printf("%sscheduler  %s>>   Scheduling...\n", C_BBLU, C_RESET);
 		pcb_t* replacement_pcb = schedule();
 
 		if (!replacement_pcb){ // == NULL
 			printf("%sscheduler  %s>>   No processes have been found available for scheduling.\n",\
 				C_BBLU, C_RESET);
-			
 			pthread_cond_signal(&sched_exit_cnd);
 			continue;
-
 		}
 
 		printf("%sscheduler  %s>>   Scheduled for process %d. Located at %p\n",\
 			 C_BBLU, C_RESET, replacement_pcb->pid, replacement_pcb);
 		
-
+		// Dispatch
 		switch(policy) {
 			case POL_RR:
 				if (replacement_pcb->pid != current_pcb->pid)
@@ -155,7 +156,6 @@ void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 
 	// Save context of current process and stop it
 	current_pcb->context = thread->context;
-		
 
 	if (current_pcb != NULL) { // Only if all threads are busy
 		printf("%sdispatcher %s>>   Switching context for thread %d...\n",\
