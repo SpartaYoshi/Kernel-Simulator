@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "../include/commons.h"
@@ -16,6 +17,10 @@
 
 machine_t      mach;
 thread_stack_t thstack;
+
+pthread_mutex_t machine_mtx;
+pthread_cond_t machine_run_cnd;
+pthread_cond_t machine_exit_cnd;
 
 
 // Timer for machine
@@ -71,7 +76,9 @@ void kmachine() {
 				}
 			}
 		}
+		pthread_cond_signal(&machine_exit_cnd);
 	}
+
 }
 
 
@@ -223,6 +230,8 @@ void execute(thread_t * th){
 	*ri = memread(iadr);
 	*pc += 4;
 
+	printf("%smachine    %s>>   Executing process %d. Instruction: %d\n",\
+		 C_BMAG, C_RESET, th->proc->pid, *ri); 
 
 	// Interpret
 	uint32_t cmd, rd, rs, rf1, rf2, addr;

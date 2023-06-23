@@ -77,6 +77,10 @@ void kloader() {
 			// Load program into memory
 			sprintf(block->context->prog_name, "./programs/elfs/prog%03d.elf", elfi);
 			_ = load_program(block);
+
+			printf("%sloader    %s>>   PID = %d. Opening %s...\n",\
+				 C_BYEL, C_RESET, block->pid, block->context->prog_name);
+
 			elfi = (elfi + 1) % NPROGRAMS; 
 
 			// Add to idle queues
@@ -90,6 +94,10 @@ void kloader() {
 		// Terminate finished processes
 		while (!is_empty(&finished_queue)){
 			pcb_t * p = dequeue(&finished_queue);
+
+			printf("%sloader    %s>>   Terminating process %d...\n",
+					C_BYEL, C_RESET, p->pid);
+
 			terminate_program(p);
 			free_process(p);
 		}
@@ -206,7 +214,6 @@ int load_program(pcb_t * proc){
 }
 
 void terminate_program(pcb_t * proc){
-	uint32_t pg_adr;
 	int i;
 
 	// Free pages

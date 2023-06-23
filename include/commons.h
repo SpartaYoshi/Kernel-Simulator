@@ -11,8 +11,6 @@
 //////////////////
 
 // Constants
-#define NTIMERS  3
-
 #define MAX_CPUS		3
 #define MAX_CORES		8
 #define MAX_THREADS    32

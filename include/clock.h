@@ -1,5 +1,6 @@
 #include <pthread.h>
 
+extern int NTIMERS;
 extern int timers_done;
 
 extern unsigned int runtime_tick;

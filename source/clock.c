@@ -9,6 +9,7 @@
 
 // Declaration
 unsigned int runtime_tick; 
+int NTIMERS; 
 int timers_done = 0; // timer completion
 
 pthread_mutex_t clock_mtx;

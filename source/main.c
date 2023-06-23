@@ -135,32 +135,40 @@ int main(int argc, char *argv[]) {
 
 	// Hardware initialization
 	pthread_t clock_o;
-	pthread_create(&clock_o, NULL, (void *) kclock, NULL);
 	pthread_t timer_sched_o;
-	pthread_create(&timer_sched_o, NULL, (void *) timer_sched, NULL);
 	pthread_t timer_machine_o;
-	pthread_create(&timer_machine_o, NULL, (void *) timer_machine, NULL);
 	pthread_t timer_procgen_o;
 	pthread_t timer_loader_o;
 	pthread_t sched_o;
-	pthread_create(&sched_o, NULL, (void *) ksched_disp, NULL);
-	pthread_t machine_o;
-	pthread_create(&machine_o, NULL, (void *) kmachine, NULL);
-
 	pthread_t procgen_o;
 	pthread_t loader_o;
+	pthread_t machine_o;
+
+	pthread_create(&clock_o, NULL, (void *) kclock, NULL);
+	pthread_create(&timer_sched_o, NULL, (void *) timer_sched, NULL);
+	pthread_create(&sched_o, NULL, (void *) ksched_disp, NULL);
+
 
 	switch(p_mode){
 		case MOD_LOADER:
 			pthread_create(&timer_loader_o, NULL, (void *) timer_loader,\
 				 NULL);
 			pthread_create(&loader_o, NULL, (void *) kloader, NULL);
+				
+			pthread_create(&timer_machine_o, NULL, (void *) timer_machine,\
+				 NULL);
+			pthread_create(&machine_o, NULL, (void *) kmachine, NULL);
+
+			NTIMERS = 3;
+
 		break;
 		
 		case MOD_PROCGEN:
 			pthread_create(&timer_procgen_o, NULL, (void *) timer_procgen,\
 				 NULL);
 			pthread_create(&procgen_o, NULL, (void *) kprocgen, NULL);
+
+			NTIMERS = 2;
 		break;
 
 		default: break;

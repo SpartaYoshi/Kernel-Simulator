@@ -66,8 +66,11 @@ void kprocgen() {
 			pcb_t* block = malloc(sizeof(pcb_t));
 			block->pid = ++pcbs_generated;
 			block->state = PRSTAT_IDLE;
-			block->priority = 20;
-			block->quantum = QUANTUM_DEFAULT;
+			srand(time(NULL));
+			block->priority = rand() % 139;
+			block->quantum = rand() % 15 + QUANTUM_MIN;
+			block->context = (pcb_context_t *) malloc(sizeof(pcb_context_t));
+
 
 			// Link to dynamic list of processes
 			block->next = head;
