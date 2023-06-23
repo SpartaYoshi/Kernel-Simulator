@@ -147,9 +147,3 @@ void quantum_compiler() {
 		}
 	}
 }
-
-
-// All busy processes execute an instruction (per clock tick)
-void execute(){
-	
-}

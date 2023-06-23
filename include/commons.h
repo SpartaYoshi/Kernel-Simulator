@@ -19,7 +19,9 @@
 
 #define QUEUE_CAPACITY   100
 #define TLB_CAPACITY       6
-#define QUANTUM_DEFAULT   40
+//#define QUANTUM_DEFAULT   40
+#define QUANTUM_MIN       35 // random quantum ranges from 35-50
+
 
 #define NPROGRAMS 13
 

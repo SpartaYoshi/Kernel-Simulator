@@ -73,15 +73,12 @@ void kloader() {
 			block->state = PRSTAT_IDLE;
 			srand(time(NULL));
 			block->priority = rand() % 139;
-			block->quantum = QUANTUM_DEFAULT;
+			block->quantum = rand() % 15 + QUANTUM_MIN;
 			block->context = (pcb_context_t *) malloc(sizeof(pcb_context_t));
 
 			// Link to dynamic list of processes
 			block->next = head_l;
 			head_l = block;
-
-			// Add to idle queues
-			enqueue(&idle_queue, block);
 
 			// Reserve page table in memory
 			block->mm.pgb = create_page_table();
@@ -91,6 +88,9 @@ void kloader() {
 			sprintf(block->context->prog_name, "./programs/elfs/prog%03d.elf", elfi);
 			_ = load_elf(block);
 			elfi = (elfi + 1) % NPROGRAMS; 
+
+			// Add to idle queues
+			enqueue(&idle_queue, block);
 
 			if (_ == 0)
 				printf("%sloader    %s>>   Process %d successfully generated. Located at %p\n",
@@ -171,6 +171,8 @@ int load_elf(pcb_t * proc){
 }
 
 
+
+// All busy processes execute an instruction (per clock tick)
 void execute(thread_t * th){
 	// Alias
 	uint32_t * pc = &th->context->pc;
@@ -331,6 +333,7 @@ void execute(thread_t * th){
 		// exit
 		case 0xF:      // C-------
 			// raise flag for process unloading - free thread
+			th->proc->state = PRSTAT_FINISHED;
 		break;
 		
 	}
