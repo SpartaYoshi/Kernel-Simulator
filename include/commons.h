@@ -33,6 +33,7 @@
 #define PRSTAT_IDLE 	 0
 #define PRSTAT_RUNNING   1
 #define PRSTAT_FINISHED  2
+#define PRSTAT_NULL		 3
 
 #define POL_FCFS  0
 #define POL_RR    1
@@ -64,6 +65,9 @@ typedef struct {
 	pid_t pid;
 	uint32_t nPag; // page
 	uint32_t nFrame; // frame
+	uint8_t valid : 1;
+	uint8_t frequency : 3; // lowest = 0, highest = 7
+	uint8_t reserved : 4;  // unused
 } tlb_t;
 
 // Page Table Entry (PTE) (32 bytes - uint32_t)
@@ -88,6 +92,7 @@ typedef struct {
 	uint32_t  code;       // points to start of code segment
 	uint32_t  data;       // points to start of data segment
 	pte_t*    pgb;        // points to page table physical address
+	uint32_t  pt_address; // address in memory of page table
 	int       pt_entries; // page table entries
 	uint32_t  mem_length; // how many positions do code and data occupy in memory
 } mm_t;

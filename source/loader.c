@@ -19,7 +19,6 @@ pcb_t* head_l;
 int pcbs_generated_l = 0;
 int elfi = 0;
 
-
 // Timer for loader
 void timer_loader() {
 	printf("%sInitiated:%s Timer for loader\n", C_BCYN, C_RESET);
@@ -62,6 +61,7 @@ void kloader() {
 	while(1) {
 		pthread_cond_wait(&loader_run_cnd, &loader_mtx);
 		
+		// Create a new process if max capacity can handle
 		if (pcbs_generated_l < (nth * ncores * ncpu) + QUEUE_CAPACITY && \
 		    idle_queue.size < QUEUE_CAPACITY) {
 			printf("%sloader    %s>>   Generating process %d...\n",\
@@ -71,12 +71,12 @@ void kloader() {
 			pcb_t* block = create_process();
 
 			// Reserve page table in memory
-			block->mm.pgb = create_page_table();
+			create_page_table(block);
 			block->mm.pt_entries = 0;
 			
 			// Load program into memory
 			sprintf(block->context->prog_name, "./programs/elfs/prog%03d.elf", elfi);
-			_ = load_elf(block);
+			_ = load_program(block);
 			elfi = (elfi + 1) % NPROGRAMS; 
 
 			// Add to idle queues
@@ -86,13 +86,58 @@ void kloader() {
 				printf("%sloader    %s>>   Process %d successfully generated. Located at %p\n",
 					C_BYEL, C_RESET, block->pid, block);
 		}
+
+		// Terminate finished processes
+		while (!is_empty(&finished_queue)){
+			pcb_t * p = dequeue(&finished_queue);
+			terminate_program(p);
+			free_process(p);
+		}
 		
 		pthread_cond_signal(&loader_exit_cnd);
 	}
 }
 
+// Create process block
+pcb_t * create_process(){
+	pcb_t* block = (pcb_t *) malloc(sizeof(pcb_t));
+	block->pid = ++pcbs_generated_l;
+	block->state = PRSTAT_IDLE;
+	srand(time(NULL));
+	block->priority = rand() % 139;
+	block->quantum = rand() % 15 + QUANTUM_MIN;
+	block->context = (pcb_context_t *) malloc(sizeof(pcb_context_t));
 
-int load_elf(pcb_t * proc){
+	// Link to dynamic list of processes
+	block->next = head_l;
+	head_l = block;
+	return block;
+}
+
+
+// Free process block
+void free_process(pcb_t * proc){
+	pcb_t * i = head_l;
+	pcb_t * iprev = NULL;
+
+	// Find process in process list
+	while (i->pid != proc->pid) {
+		if (i->next == NULL) break; // this should not happen (security)
+		iprev = i;
+		i = i->next;
+	}
+
+	// Unlink from chain
+	if (iprev != NULL)	iprev->next = i->next;
+	
+	// Free
+	free(i->context);
+	free(i);
+}
+
+
+// Load .elf program into memory
+int load_program(pcb_t * proc){
 	FILE *fp;
 	char line[16];
 	int _, bytes_loaded;
@@ -160,38 +205,17 @@ int load_elf(pcb_t * proc){
 	return 0;
 }
 
-// Create process block
-pcb_t * create_process(){
-	pcb_t* block = (pcb_t *) malloc(sizeof(pcb_t));
-	block->pid = ++pcbs_generated_l;
-	block->state = PRSTAT_IDLE;
-	srand(time(NULL));
-	block->priority = rand() % 139;
-	block->quantum = rand() % 15 + QUANTUM_MIN;
-	block->context = (pcb_context_t *) malloc(sizeof(pcb_context_t));
+void terminate_program(pcb_t * proc){
+	uint32_t pg_adr;
+	int i;
 
-	// Link to dynamic list of processes
-	block->next = head_l;
-	head_l = block;
-	return block;
-}
+	// Free pages
+	for (i = 0; i < proc->mm.pt_entries; i++)
+		free_page(proc->mm.pgb[i].frame_address);
 
+	// Free page table
+	delete_page_table(proc);
 
-void free_process(pcb_t * proc){
-	pcb_t * i = head_l;
-	pcb_t * iprev = NULL;
-
-	// Find process in process list
-	while (i->pid != proc->pid) {
-		if (i->next == NULL) break; // this should not happen (security)
-		iprev = i;
-		i = i->next;
-	}
-
-	// Unlink from chain
-	if (iprev != NULL)	iprev->next = i->next;
-	
-	// Free
-	free(i->context);
-	free(i);
+	// Free TLB 
+		//(already done when instruction exit is read directly, in machine.c)
 }

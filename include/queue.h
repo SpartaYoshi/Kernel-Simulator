@@ -1,6 +1,8 @@
 #include "commons.h"
 
 extern process_queue_t idle_queue; // Queue of waiting processes
+extern process_queue_t finished_queue; // Queue of finished processes
+
 
 void init_queue(process_queue_t* q);
 void enqueue(process_queue_t* q, pcb_t* data);

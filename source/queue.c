@@ -4,7 +4,11 @@
 #include "../include/queue.h"
 
 process_queue_t idle_queue;
-pcb_t nullp = {NULL, -1, PRSTAT_IDLE, 140, 0, 0};
+process_queue_t finished_queue;
+
+pcb_t nullp = {NULL, -1, PRSTAT_NULL, 140, 0, 
+			0, 0, 0, 0,0,0,
+			NULL};
 
 void init_queue(process_queue_t *q) {
   q->front = 0;

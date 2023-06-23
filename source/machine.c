@@ -11,6 +11,7 @@
 #include "../include/procgen.h"
 #include "../include/ansi.h"
 #include "../include/memory.h"
+#include "../include/queue.h"
 
 
 machine_t      mach;
@@ -368,8 +369,13 @@ void execute(thread_t * th){
 
 		// exit
 		case 0xF:      // C-------
-			// raise flag for process unloading - free thread
 			th->proc->state = PRSTAT_FINISHED;
+			enqueue(&finished_queue, th->proc);
+
+			// Free own TLB cache entries if any (needs thread for this)
+			for (int i = 0; i < TLB_CAPACITY; i++)
+				if (th->proc->pid == th->mmu.tlb[i].pid)
+					th->mmu.tlb[i].valid = 0;
 		break;
 		
 	}
