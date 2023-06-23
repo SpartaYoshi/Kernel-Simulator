@@ -28,14 +28,15 @@ void timer_loader() {
 	while(!kernel_start);
 
 	init_queue(&idle_queue);
+	init_queue(&finished_queue);
 
 	pthread_mutex_lock(&clock_mtx);
 	pthread_mutex_lock(&loader_mtx);
 
 	while (1) {		
 		timers_done++;
-		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency, \
-											   it takes longer or shorter time
+		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency,
+											// it takes longer or shorter time
 			current_tick++;
 		current_tick = 0;
 
@@ -64,7 +65,7 @@ void kloader() {
 		// Create a new process if max capacity can handle
 		if (pcbs_generated_l < (nth * ncores * ncpu) + QUEUE_CAPACITY && \
 		    idle_queue.size < QUEUE_CAPACITY) {
-			printf("%sloader    %s>>   Generating process %d...\n",\
+			printf("%sloader     %s>>   Generating process %d...\n",\
 				 C_BYEL, C_RESET, pcbs_generated_l + 1);
 
 			// Create process
@@ -76,26 +77,33 @@ void kloader() {
 			
 			// Load program into memory
 			sprintf(block->context->prog_name, "./programs/elfs/prog%03d.elf", elfi);
-			_ = load_program(block);
 
-			printf("%sloader    %s>>   PID = %d. Opening %s...\n",\
+			printf("%sloader     %s>>   PID = %d. Opening %s...\n",\
 				 C_BYEL, C_RESET, block->pid, block->context->prog_name);
 
+			_ = load_program(block);
 			elfi = (elfi + 1) % NPROGRAMS; 
+
+			if (_ != 0){
+				printf("%sloader     %s>>   %sERROR: %sThere was a problem loading %s into memory. Stopping simulation...\nCTRL+C to quit.\n",
+					C_BYEL, C_RESET, C_BRED, C_RESET, block->context->prog_name);
+				while(1);
+			}
+				
 
 			// Add to idle queues
 			enqueue(&idle_queue, block);
 
-			if (_ == 0)
-				printf("%sloader    %s>>   Process %d successfully generated. Located at %p\n",
+			printf("%sloader     %s>>   Process %d successfully generated. Located at %p\n",
 					C_BYEL, C_RESET, block->pid, block);
+			
 		}
 
 		// Terminate finished processes
 		while (!is_empty(&finished_queue)){
 			pcb_t * p = dequeue(&finished_queue);
 
-			printf("%sloader    %s>>   Terminating process %d...\n",
+			printf("%sloader     %s>>   Terminating process %d...\n",
 					C_BYEL, C_RESET, p->pid);
 
 			terminate_program(p);
@@ -158,36 +166,48 @@ int load_program(pcb_t * proc){
 	// Open file	
 	fp = fopen(proc->context->prog_name, "r");
 	if (fp == NULL) {
-		printf("%sloader    %s>>   %sERROR: %sFile could not be opened. \n",
+		printf("%sloader     %s>>   %sERROR: %sFile could not be opened. \n",
 			C_BYEL, C_RESET, C_BRED, C_RESET);
 		return 1;
 	}
+
+	printf("AAAAA 1\n"); fflush(stdout);
 
 	// Get virtual addresses for code
 	_ = fscanf(fp, "%s %X", line, &proc->mm.code);
 	if (_ != 2) {
-		printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
+		printf("%sloader     %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
 			C_BYEL, C_RESET, C_BRED, C_RESET);
 		fclose(fp);
 		return 1;
 	}
 
+		printf("AAAAA 2\n"); fflush(stdout);
+
+
 	// Get virtual addresses for data
 	_ = fscanf(fp, "%s %X", line, &proc->mm.data);
 	if (_ != 2) {
-		printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
+		printf("%sloader     %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
 			C_BYEL, C_RESET, C_BRED, C_RESET);
 		fclose(fp);
 		return 1;
 	}	
+		printf("AAAAA 3\n"); fflush(stdout);
+
 
 	// Copy to memory
 	bytes_loaded = PAGE_SIZE;  // to activate first alloc. logically it should be 0
+	int aaaaaa = 2;
 	while (!feof(fp)){
+		printf("line %d\n", ++aaaaaa); fflush(stdout);
 		// Scan for word (4 bytes)
 		_ = fscanf(fp, "%X", &word);
+		printf("read: %08X", word);
+				if (_ == 0) break; // last empty line
+
 		if (_ != 1) {
-			printf("%sloader    %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
+			printf("%sloader     %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
 				C_BYEL, C_RESET, C_BRED, C_RESET);
 			fclose(fp);
 			return 1;

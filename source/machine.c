@@ -36,8 +36,8 @@ void timer_machine() {
 
 	while (1) {		
 		timers_done++;
-		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency, \
-											   it takes longer or shorter time
+		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency,
+											// it takes longer or shorter time
 			current_tick++;
 		current_tick = 0;
 
@@ -58,11 +58,15 @@ void kmachine() {
 	printf("%sInitiated:%s Machine process\n", C_BCYN, C_RESET);
 
 	init_machine();
+	init_memory();
 	while(!kernel_start);
 	
 	while(1) {
 		pthread_cond_wait(&machine_run_cnd, &machine_mtx);
 		
+		printf("%smachine    %s>>   Execution tick.\n",\
+		 C_BMAG, C_RESET); 
+
 		for (i = 0; i < ncpu; i++) {
 			for (j = 0; j < ncores; j++){
 				core_t* jcore = &mach.cpu[i].core[j];

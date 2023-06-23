@@ -15,6 +15,9 @@ nfsp_t*   free_space;    // Head of list of pointers to empty space in memory
 
 // Initialize memory environment
 void init_memory() {
+	printf("%sInitiated:%s Memory (16 MB)\n",\
+		 C_BCYN, C_RESET);
+
 	// Allocate memory
 	physical = (uint8_t *) calloc(0x1000000, sizeof(uint8_t));
 
@@ -62,6 +65,9 @@ void delete_nfs_node(nfsp_t * nfsp){
 // Create page table
 void create_page_table(pcb_t * proc) {
 
+	printf("%smemory     %s>>   Creating page table for process %d...\n",
+		C_BWHT, C_RESET, proc->pid);
+
 	// Check for free space
 	nfsp_t* nfsp = kernel_space;
 	while(nfsp->length < (PAGE_TABLE_SIZE * sizeof(pte_t)) && nfsp->next != NULL)
@@ -87,6 +93,10 @@ void create_page_table(pcb_t * proc) {
 
 // Delete page table
 void delete_page_table(pcb_t * proc) {
+
+	printf("%smemory     %s>>   Deleting page table for process %d...\n",
+		C_BWHT, C_RESET, proc->pid);
+
 	nfsp_t * nfsp = kernel_space;
 	int extended_prev, extended_next;
 	uint32_t pt_adr = proc->mm.pt_address; // alias
@@ -144,12 +154,17 @@ uint32_t alloc_page(){
 		nfsp->address += PAGE_SIZE; 
 	}
 
+	printf("%smemory     %s>>   Reserved space in memory at mem address %d.\n",
+		C_BWHT, C_RESET, addr);
 	return addr;
 }
 
 
 // Free page from memory
 void free_page(uint32_t pg_adr) {
+	printf("%smemory     %s>>   Freeing space in memory at mem address %d...\n",
+		C_BWHT, C_RESET, pg_adr);
+		
 	nfsp_t * nfsp = free_space;
 	int extended_prev, extended_next;
 

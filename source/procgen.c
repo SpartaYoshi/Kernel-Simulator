@@ -32,8 +32,8 @@ void timer_procgen() {
 
 	while (1) {		
 		timers_done++;
-		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency,\
-											   it takes longer or shorter time
+		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency,
+											// it takes longer or shorter time
 			current_tick++;
 		current_tick = 0;
 
