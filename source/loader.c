@@ -39,6 +39,8 @@ void timer_loader() {
 											// it takes longer or shorter time
 			current_tick++;
 		current_tick = 0;
+				printf("TIMER LOADER\n");
+
 
 		// Run loader...
 		pthread_cond_signal(&loader_run_cnd);
@@ -171,8 +173,6 @@ int load_program(pcb_t * proc){
 		return 1;
 	}
 
-	printf("AAAAA 1\n"); fflush(stdout);
-
 	// Get virtual addresses for code
 	_ = fscanf(fp, "%s %X", line, &proc->mm.code);
 	if (_ != 2) {
@@ -182,9 +182,6 @@ int load_program(pcb_t * proc){
 		return 1;
 	}
 
-		printf("AAAAA 2\n"); fflush(stdout);
-
-
 	// Get virtual addresses for data
 	_ = fscanf(fp, "%s %X", line, &proc->mm.data);
 	if (_ != 2) {
@@ -193,19 +190,14 @@ int load_program(pcb_t * proc){
 		fclose(fp);
 		return 1;
 	}	
-		printf("AAAAA 3\n"); fflush(stdout);
-
 
 	// Copy to memory
 	bytes_loaded = PAGE_SIZE;  // to activate first alloc. logically it should be 0
-	int aaaaaa = 2;
 	while (!feof(fp)){
-		printf("line %d\n", ++aaaaaa); fflush(stdout);
 		// Scan for word (4 bytes)
 		_ = fscanf(fp, "%X", &word);
-		printf("read: %08X", word);
-				if (_ == 0) break; // last empty line
-
+				
+		if (_ == -1) break; // last empty line
 		if (_ != 1) {
 			printf("%sloader     %s>>   %sERROR: %sFile could not be read: Wrong format. \n",
 				C_BYEL, C_RESET, C_BRED, C_RESET);

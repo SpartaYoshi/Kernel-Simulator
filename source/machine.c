@@ -41,6 +41,8 @@ void timer_machine() {
 			current_tick++;
 		current_tick = 0;
 
+						printf("TIMER MACHINE\n");
+
 		// Run loader...
 		pthread_cond_signal(&machine_run_cnd);
 			// Here, the loader takes action and the timer waits for it to finish
@@ -234,7 +236,7 @@ void execute(thread_t * th){
 	*ri = memread(iadr);
 	*pc += 4;
 
-	printf("%smachine    %s>>   Executing process %d. Instruction: %d\n",\
+	printf("%smachine    %s>>   Executing process %d. Instruction: %08X\n",\
 		 C_BMAG, C_RESET, th->proc->pid, *ri); 
 
 	// Interpret

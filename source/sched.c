@@ -43,6 +43,8 @@ void timer_sched() {
 
 		stacked_th = false;
 
+		printf("TIMER SCHED\n");
+
 		// If all threads are busy, tick quantums and compile timed out processes
 		if (tid >= (nth * ncores * ncpu)) {
 			if (!thstack.size)
@@ -119,6 +121,16 @@ void ksched_disp() {
 
 		printf("%sscheduler  %s>>   Scheduling...\n", C_BBLU, C_RESET);
 		pcb_t* replacement_pcb = schedule();
+
+		if (!replacement_pcb){ // == NULL
+			printf("%sscheduler  %s>>   No processes have been found available for scheduling.\n",\
+				C_BBLU, C_RESET);
+			
+			pthread_cond_signal(&sched_exit_cnd);
+			continue;
+
+		}
+
 		printf("%sscheduler  %s>>   Scheduled for process %d. Located at %p\n",\
 			 C_BBLU, C_RESET, replacement_pcb->pid, replacement_pcb);
 		
