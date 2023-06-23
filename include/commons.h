@@ -11,7 +11,7 @@
 //////////////////
 
 // Constants
-#define NTIMERS  2
+#define NTIMERS  3
 
 #define MAX_CPUS		3
 #define MAX_CORES		8
@@ -61,6 +61,7 @@ extern int kernel_start;
 
 // Translation Lookaside Buffer Entry (TLB)
 typedef struct {
+	pid_t pid;
 	uint32_t nPag; // page
 	uint32_t nFrame; // frame
 } tlb_t;
@@ -76,7 +77,6 @@ typedef struct {
 	uint32_t valid : 1;          // 1 if entry is valid
 
 } pte_t;
-
 
 // Memory Management Unit (MMU)
 typedef struct {

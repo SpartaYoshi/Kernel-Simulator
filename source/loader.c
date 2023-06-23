@@ -67,18 +67,8 @@ void kloader() {
 			printf("%sloader    %s>>   Generating process %d...\n",\
 				 C_BYEL, C_RESET, pcbs_generated_l + 1);
 
-			// Create process block
-			pcb_t* block = (pcb_t *) malloc(sizeof(pcb_t));
-			block->pid = ++pcbs_generated_l;
-			block->state = PRSTAT_IDLE;
-			srand(time(NULL));
-			block->priority = rand() % 139;
-			block->quantum = rand() % 15 + QUANTUM_MIN;
-			block->context = (pcb_context_t *) malloc(sizeof(pcb_context_t));
-
-			// Link to dynamic list of processes
-			block->next = head_l;
-			head_l = block;
+			// Create process
+			pcb_t* block = create_process();
 
 			// Reserve page table in memory
 			block->mm.pgb = create_page_table();
@@ -170,173 +160,38 @@ int load_elf(pcb_t * proc){
 	return 0;
 }
 
+// Create process block
+pcb_t * create_process(){
+	pcb_t* block = (pcb_t *) malloc(sizeof(pcb_t));
+	block->pid = ++pcbs_generated_l;
+	block->state = PRSTAT_IDLE;
+	srand(time(NULL));
+	block->priority = rand() % 139;
+	block->quantum = rand() % 15 + QUANTUM_MIN;
+	block->context = (pcb_context_t *) malloc(sizeof(pcb_context_t));
+
+	// Link to dynamic list of processes
+	block->next = head_l;
+	head_l = block;
+	return block;
+}
 
 
-// All busy processes execute an instruction (per clock tick)
-void execute(thread_t * th){
-	// Alias
-	uint32_t * pc = &th->context->pc;
-	uint32_t * ri = &th->context->ri;
-	uint32_t * rf = th->context->rf;
-	uint16_t * cc = &th->context->cc;
+void free_process(pcb_t * proc){
+	pcb_t * i = head_l;
+	pcb_t * iprev = NULL;
 
-
-	// Fetch instruction
-	uint32_t iadr = translate(th, *pc); 
-	*ri = memread(iadr);
-	*pc += 4;
-
-
-	// Interpret
-	uint32_t cmd, rd, rs, rf1, rf2, addr;
-	cmd = (*ri & 0xF0000000) >> 28;  // C-------
-
-	switch(cmd){
-		// ld   rd,addr
-		case 0x0:        // CRAAAAAA
-			rd   = (*ri & 0x0F000000) >> 24;
-			addr = (*ri & 0x00FFFFFF);
-
-			rf[rd] = memread(translate(th, addr));
-		break;
-
-
-		// st   rs,addr
-		case 0x1:        // CRAAAAAA
-			rs   = (*ri & 0x0F000000) >> 24;
-			addr = (*ri & 0x00FFFFFF);
-
-			memwrite(translate(th, addr), rf[rs]);
-		break;
-
-		
-		// add  rd,rf1,rf2
-		case 0x2:       // CRRR----
-			rd  = (*ri & 0x0F000000) >> 24;
-			rf1 = (*ri & 0x00F00000) >> 20;
-			rf2 = (*ri & 0x000F0000) >> 16;
-
-			rf[rd] = rf[rf1] + rf[rf2];
-		break;
-
-
-		// sub  rd,rf1,rf2
-		case 0x3:       // CRRR----
-			rd  = (*ri & 0x0F000000) >> 24;
-			rf1 = (*ri & 0x00F00000) >> 20;
-			rf2 = (*ri & 0x000F0000) >> 16;
-
-			rf[rd] = rf[rf1] - rf[rf2];
-		break;
-
-
-		// mul  rd,rf1,rf2
-		case 0x4:       // CRRR----
-			rd  = (*ri & 0x0F000000) >> 24;
-			rf1 = (*ri & 0x00F00000) >> 20;
-			rf2 = (*ri & 0x000F0000) >> 16;
-
-			rf[rd] = rf[rf1] * rf[rf2];
-		break;
-
-
-		// div  rd,rf1,rf2
-		case 0x5:       // CRRR----
-			rd  = (*ri & 0x0F000000) >> 24;
-			rf1 = (*ri & 0x00F00000) >> 20;
-			rf2 = (*ri & 0x000F0000) >> 16;
-
-			rf[rd] = rf[rf1] / rf[rf2];
-		break;
-
-		
-		// and  rd,rf1,rf2
-		case 0x6:       // CRRR----
-			rd  = (*ri & 0x0F000000) >> 24;
-			rf1 = (*ri & 0x00F00000) >> 20;
-			rf2 = (*ri & 0x000F0000) >> 16;
-
-			rf[rd] = rf[rf1] & rf[rf2];
-		break;
-
-
-		// or  rd,rf1,rf2
-		case 0x7:       // CRRR----
-			rd  = (*ri & 0x0F000000) >> 24;
-			rf1 = (*ri & 0x00F00000) >> 20;
-			rf2 = (*ri & 0x000F0000) >> 16;
-
-			rf[rd] = rf[rf1] | rf[rf2];
-		break;
-
-		
-		// xor  rd,rf1,rf2
-		case 0x8:       // CRRR----
-			rd  = (*ri & 0x0F000000) >> 24;
-			rf1 = (*ri & 0x00F00000) >> 20;
-			rf2 = (*ri & 0x000F0000) >> 16;
-
-			rf[rd] = rf[rf1] ^ rf[rf2];
-		break;
-
-
-		// mov  rd,rs
-		case 0x9:      // CRR-----
-			rd = (*ri & 0x0F000000) >> 24;
-			rs = (*ri & 0x00F00000) >> 20;
-			
-			rf[rd] = rf[rs];
-		break;
-
-
-		// cmp  rf1,rf2
-		case 0xA:      // CRR-----
-			rf1 = (*ri & 0x0F000000) >> 24;
-			rf2 = (*ri & 0x00F00000) >> 20;
-			
-			*cc = rf[rf1] - rf[rf2];
-		break;
-
-
-		// b    addr
-		case 0xB:      // C-AAAAAA
-			addr = (*ri & 0x00FFFFFF);
-			
-			*pc = addr;
-		break;
-
-
-		// beq  addr
-		case 0xC:      // C-AAAAAA
-			addr = (*ri & 0x00FFFFFF);
-			
-			if(cc == 0)  *pc = addr;
-		break;
-
-
-		// bgt  addr
-		case 0xD:      // C-AAAAAA
-			addr = (*ri & 0x00FFFFFF);
-			
-			if (cc > 0)  *pc = addr;
-		break;
-
-
-		// blt  addr
-		case 0xE:      // C-AAAAAA
-			addr = (*ri & 0x00FFFFFF);
-			
-			if (cc < 0)  *pc = addr;
-		break;
-
-
-		// exit
-		case 0xF:      // C-------
-			// raise flag for process unloading - free thread
-			th->proc->state = PRSTAT_FINISHED;
-		break;
-		
+	// Find process in process list
+	while (i->pid != proc->pid) {
+		if (i->next == NULL) break; // this should not happen (security)
+		iprev = i;
+		i = i->next;
 	}
-	
 
+	// Unlink from chain
+	if (iprev != NULL)	iprev->next = i->next;
+	
+	// Free
+	free(i->context);
+	free(i);
 }

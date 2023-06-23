@@ -8,4 +8,5 @@ extern pthread_cond_t loader_exit_cnd;
 void timer_loader();
 void kloader();
 int load_elf(pcb_t * proc);
+pcb_t * create_process();
 

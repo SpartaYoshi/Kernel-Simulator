@@ -107,8 +107,11 @@ int main(int argc, char *argv[]) {
 	// Mutex and conditionals initialization
 	pthread_mutex_init(&clock_mtx, NULL);
 	pthread_mutex_init(&sched_mtx, NULL);
+	pthread_mutex_init(&machine_mtx, NULL);
 	pthread_cond_init(&sched_run_cnd, NULL);
 	pthread_cond_init(&sched_exit_cnd, NULL);
+	pthread_cond_init(&machine_run_cnd, NULL);
+	pthread_cond_init(&machine_exit_cnd, NULL);
 
 	pthread_cond_init(&tickwork_cnd, NULL);
 	pthread_cond_init(&pending_cnd, NULL);
@@ -135,10 +138,15 @@ int main(int argc, char *argv[]) {
 	pthread_create(&clock_o, NULL, (void *) kclock, NULL);
 	pthread_t timer_sched_o;
 	pthread_create(&timer_sched_o, NULL, (void *) timer_sched, NULL);
+	pthread_t timer_machine_o;
+	pthread_create(&timer_machine_o, NULL, (void *) timer_machine, NULL);
 	pthread_t timer_procgen_o;
 	pthread_t timer_loader_o;
 	pthread_t sched_o;
 	pthread_create(&sched_o, NULL, (void *) ksched_disp, NULL);
+	pthread_t machine_o;
+	pthread_create(&machine_o, NULL, (void *) kmachine, NULL);
+
 	pthread_t procgen_o;
 	pthread_t loader_o;
 
@@ -157,8 +165,6 @@ int main(int argc, char *argv[]) {
 
 		default: break;
 	}
-
-	init_machine();
 
 	// Kernel simulation.
 	sleep(2); // To force print after thread init

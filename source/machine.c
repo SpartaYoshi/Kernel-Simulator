@@ -5,14 +5,73 @@
 #include <unistd.h>
 
 #include "../include/commons.h"
+#include "../include/machine.h"
 #include "../include/clock.h"
 #include "../include/sched.h"
 #include "../include/procgen.h"
 #include "../include/ansi.h"
+#include "../include/memory.h"
 
 
 machine_t      mach;
 thread_stack_t thstack;
+
+
+// Timer for machine
+void timer_machine() {
+	printf("%sInitiated:%s Timer for machine\n", C_BCYN, C_RESET);
+
+	unsigned int current_tick = 0;
+
+	while(!kernel_start);
+
+	pthread_mutex_lock(&clock_mtx);
+	pthread_mutex_lock(&machine_mtx);
+
+	while (1) {		
+		timers_done++;
+		while (current_tick < 1000*freq)	// Example: multiplication depending on frequency, \
+											   it takes longer or shorter time
+			current_tick++;
+		current_tick = 0;
+
+		// Run loader...
+		pthread_cond_signal(&machine_run_cnd);
+			// Here, the loader takes action and the timer waits for it to finish
+		pthread_cond_wait(&machine_exit_cnd, &machine_mtx); 
+		
+		// Signal to clock
+		pthread_cond_signal(&tickwork_cnd);
+		pthread_cond_wait(&pending_cnd, &clock_mtx);
+	}
+}
+
+// Machine
+void kmachine() {
+	int i, j, k;
+	printf("%sInitiated:%s Machine process\n", C_BCYN, C_RESET);
+
+	init_machine();
+	while(!kernel_start);
+	
+	while(1) {
+		pthread_cond_wait(&machine_run_cnd, &machine_mtx);
+		
+		for (i = 0; i < ncpu; i++) {
+			for (j = 0; j < ncores; j++){
+				core_t* jcore = &mach.cpu[i].core[j];
+				for (k = 0; k < jcore->thread_count; k++) {
+					pcb_t* process_block = jcore->thread[k].proc;
+					if (!process_block)
+						continue;
+
+					if (process_block->state == PRSTAT_RUNNING)
+						execute(&jcore->thread[k]); // execute instructions on all active threads
+				}
+			}
+		}
+	}
+}
 
 
 void init_machine() {
@@ -146,4 +205,174 @@ void quantum_compiler() {
 			}
 		}
 	}
+}
+
+
+// All busy processes execute an instruction (per clock tick)
+void execute(thread_t * th){
+	// Alias
+	uint32_t * pc = &th->context->pc;
+	uint32_t * ri = &th->context->ri;
+	uint32_t * rf = th->context->rf;
+	uint16_t * cc = &th->context->cc;
+
+
+	// Fetch instruction
+	uint32_t iadr = translate(th, *pc); 
+	*ri = memread(iadr);
+	*pc += 4;
+
+
+	// Interpret
+	uint32_t cmd, rd, rs, rf1, rf2, addr;
+	cmd = (*ri & 0xF0000000) >> 28;  // C-------
+
+	switch(cmd){
+		// ld   rd,addr
+		case 0x0:        // CRAAAAAA
+			rd   = (*ri & 0x0F000000) >> 24;
+			addr = (*ri & 0x00FFFFFF);
+
+			rf[rd] = memread(translate(th, addr));
+		break;
+
+
+		// st   rs,addr
+		case 0x1:        // CRAAAAAA
+			rs   = (*ri & 0x0F000000) >> 24;
+			addr = (*ri & 0x00FFFFFF);
+
+			memwrite(translate(th, addr), rf[rs]);
+		break;
+
+		
+		// add  rd,rf1,rf2
+		case 0x2:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] + rf[rf2];
+		break;
+
+
+		// sub  rd,rf1,rf2
+		case 0x3:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] - rf[rf2];
+		break;
+
+
+		// mul  rd,rf1,rf2
+		case 0x4:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] * rf[rf2];
+		break;
+
+
+		// div  rd,rf1,rf2
+		case 0x5:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] / rf[rf2];
+		break;
+
+		
+		// and  rd,rf1,rf2
+		case 0x6:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] & rf[rf2];
+		break;
+
+
+		// or  rd,rf1,rf2
+		case 0x7:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] | rf[rf2];
+		break;
+
+		
+		// xor  rd,rf1,rf2
+		case 0x8:       // CRRR----
+			rd  = (*ri & 0x0F000000) >> 24;
+			rf1 = (*ri & 0x00F00000) >> 20;
+			rf2 = (*ri & 0x000F0000) >> 16;
+
+			rf[rd] = rf[rf1] ^ rf[rf2];
+		break;
+
+
+		// mov  rd,rs
+		case 0x9:      // CRR-----
+			rd = (*ri & 0x0F000000) >> 24;
+			rs = (*ri & 0x00F00000) >> 20;
+			
+			rf[rd] = rf[rs];
+		break;
+
+
+		// cmp  rf1,rf2
+		case 0xA:      // CRR-----
+			rf1 = (*ri & 0x0F000000) >> 24;
+			rf2 = (*ri & 0x00F00000) >> 20;
+			
+			*cc = rf[rf1] - rf[rf2];
+		break;
+
+
+		// b    addr
+		case 0xB:      // C-AAAAAA
+			addr = (*ri & 0x00FFFFFF);
+			
+			*pc = addr;
+		break;
+
+
+		// beq  addr
+		case 0xC:      // C-AAAAAA
+			addr = (*ri & 0x00FFFFFF);
+			
+			if(cc == 0)  *pc = addr;
+		break;
+
+
+		// bgt  addr
+		case 0xD:      // C-AAAAAA
+			addr = (*ri & 0x00FFFFFF);
+			
+			if (cc > 0)  *pc = addr;
+		break;
+
+
+		// blt  addr
+		case 0xE:      // C-AAAAAA
+			addr = (*ri & 0x00FFFFFF);
+			
+			if (cc < 0)  *pc = addr;
+		break;
+
+
+		// exit
+		case 0xF:      // C-------
+			// raise flag for process unloading - free thread
+			th->proc->state = PRSTAT_FINISHED;
+		break;
+		
+	}
+	
+
 }

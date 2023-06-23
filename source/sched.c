@@ -165,7 +165,8 @@ void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 
 	// Update properties
 	replacement_pcb->state = PRSTAT_RUNNING;
-	replacement_pcb->quantum = QUANTUM_DEFAULT;
+	srand(time(NULL));
+	replacement_pcb->quantum = rand() % 15 + QUANTUM_MIN;
 	if (replacement_pcb->priority < 140)
 		replacement_pcb->priority++;
 }
