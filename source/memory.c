@@ -199,6 +199,7 @@ void free_page(uint32_t pg_adr) {
 }
 
 
+// Read from memory
 uint32_t memread(uint32_t address){
 	uint32_t word;
 	word =         physical[address + 3];
@@ -209,6 +210,7 @@ uint32_t memread(uint32_t address){
 }
 
 
+// Write to memory
 void memwrite(uint32_t address, uint32_t data){
 	physical[address + 3] =   data & 0x000000FF;
 	physical[address + 2] = ((data & 0x0000FF00) >>  8);
@@ -217,17 +219,20 @@ void memwrite(uint32_t address, uint32_t data){
 }
 
 
+// Insert new frame record in page table
 void insert_frame(pcb_t * proc, uint32_t physadr){
 	uint32_t nPag = proc->mm.pt_entries++;
 	proc->mm.pgb[nPag].frame_address = physadr;
 }
 
 
+// Get frame record from page table
 uint32_t get_frame(pcb_t * proc, uint32_t nPag){
 	return proc->mm.pgb[nPag].frame_address;
 }
 
 
+// Translate virtual address to physical address (and update cache accordingly)
 uint32_t translate(thread_t * th, uint32_t logicadr){
 	uint32_t offset = logicadr & OFFSET_MASK;
 	uint32_t nPag   = logicadr & FRAME_MASK;
@@ -256,6 +261,7 @@ uint32_t translate(thread_t * th, uint32_t logicadr){
 }
 
 
+// Find best TLB cache slot candidate to be replaced
 int find_tlb_slot(thread_t * th){
 	int i;
 	int lowest_freq_idx = 0; // start from 0
@@ -279,6 +285,7 @@ int find_tlb_slot(thread_t * th){
 }
 
 
+// Update TLB cache entry, from the candidate decided
 void update_tlb(thread_t * th, int idx, uint32_t nPag, uint32_t nFrame){
 	th->mmu.tlb[idx].pid = th->proc->pid;
 	th->mmu.tlb[idx].nPag = nPag;

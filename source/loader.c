@@ -229,6 +229,8 @@ int load_program(pcb_t * proc){
 	return 0;
 }
 
+
+// Free resources from terminated process
 void terminate_program(pcb_t * proc){
 	int i;
 
