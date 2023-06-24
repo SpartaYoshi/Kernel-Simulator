@@ -21,6 +21,7 @@ thread_stack_t thstack;
 pthread_mutex_t machine_mtx;
 pthread_cond_t machine_run_cnd;
 pthread_cond_t machine_exit_cnd;
+int mach_init = 0;
 
 
 // Timer for machine
@@ -43,12 +44,10 @@ void timer_machine() {
 
 						printf("TIMER MACHINE\n");
 
-		// Run loader...
+		// Run machine...
 		pthread_cond_signal(&machine_run_cnd);
-			// Here, the loader takes action and the timer waits for it to finish
+			// Here, the machine takes action and the timer waits for it to finish
 		pthread_cond_wait(&machine_exit_cnd, &machine_mtx); 
-		
-								printf("TIMER MACHINE2\n");
 
 		// Signal to clock
 		pthread_cond_signal(&tickwork_cnd);
@@ -63,8 +62,11 @@ void kmachine() {
 
 	init_machine();
 	init_memory();
-	while(!kernel_start);
-	
+
+	mach_init = 1;
+
+	while(!kernel_start); 
+
 	while(1) {
 		pthread_cond_wait(&machine_run_cnd, &machine_mtx);
 		
@@ -173,8 +175,8 @@ thread_t* get_thread(int tid) {
 	int k = tid % nth;			  // Thread nº
 
 	thread_t* out = &mach.cpu[i].core[j].thread[k];
-	printf("%smachine    %s>>   Address found for thread %d, core %d, cpu %d; (tid = %d).\
-		 Located at %p\n",\
+	printf("%smachine    %s>>   Address found for thread %d, core %d, cpu %d; (tid = %d). "\
+		 "Located at %p\n",\
 		 C_BMAG, C_RESET, k, j, i, tid, out);
 
 	return out;

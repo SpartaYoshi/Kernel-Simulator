@@ -107,12 +107,9 @@ int main(int argc, char *argv[]) {
 	// Mutex and conditionals initialization
 	pthread_mutex_init(&clock_mtx, NULL);
 	pthread_mutex_init(&sched_mtx, NULL);
-	pthread_mutex_init(&machine_mtx, NULL);
 	pthread_cond_init(&sched_run_cnd, NULL);
 	pthread_cond_init(&sched_exit_cnd, NULL);
-	pthread_cond_init(&machine_run_cnd, NULL);
-	pthread_cond_init(&machine_exit_cnd, NULL);
-
+	
 	pthread_cond_init(&tickwork_cnd, NULL);
 	pthread_cond_init(&pending_cnd, NULL);
 
@@ -121,6 +118,9 @@ int main(int argc, char *argv[]) {
 			pthread_mutex_init(&loader_mtx, NULL);
 			pthread_cond_init(&loader_run_cnd, NULL);
 			pthread_cond_init(&loader_exit_cnd, NULL);
+			pthread_mutex_init(&machine_mtx, NULL);
+			pthread_cond_init(&machine_run_cnd, NULL);
+			pthread_cond_init(&machine_exit_cnd, NULL);
 		break;
 		
 		case MOD_PROCGEN:
@@ -175,15 +175,23 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Kernel simulation.
-	sleep(2); // To force print after thread init
+	while(!mach_init); // Wait for machine to fully initialize
+	sleep(3); // To force print after thread init
+
 	printf("\n%sThe kernel has been successfully initialized. Press %sSPACE%s to start!%s\n",\
 		 C_BBLU, C_BYEL, C_BBLU, C_RESET);
+
 	while (getch() != KEY_SPC);
 
 	printf("\n%sStarting...%s\n", C_BHRED, C_RESET);
-	sleep(1); // Time for user to read
-	kernel_start = 1;
+	printf("%sPress CTRL+C to quit.%s\n",\
+		 C_WHT, C_RESET);
+	sleep(2); // Time for user to read
 
+
+	// BEGIN SIMULATION ------
+
+	kernel_start = 1; 
 
 	while (1) {
 		fflush(stdout);

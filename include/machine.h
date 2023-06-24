@@ -7,6 +7,8 @@ extern pthread_mutex_t machine_mtx;
 extern pthread_cond_t machine_run_cnd;
 extern pthread_cond_t machine_exit_cnd;
 
+extern int mach_init;
+
 void timer_machine();
 void kmachine();
 

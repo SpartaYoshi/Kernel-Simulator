@@ -96,8 +96,10 @@ void ksched_disp() {
 			printf("%sscheduler  %s>>   Preparing thread %d...\n", C_BBLU, C_RESET, tid);
 			thread_selected = get_thread(tid);
 			// PROCESS = schedule() // assign process to thread. done below
+			/*
 			printf("%sscheduler  %s>>   Assigned process %d to thread %d. Located at %p\n",\
 			 C_BBLU, C_RESET, current_pcb->pid, tid, current_pcb);
+			 */
 
 			tid++;
 		}
@@ -155,11 +157,13 @@ void ksched_disp() {
 void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 
 	// Save context of current process and stop it
-	current_pcb->context = thread->context;
+	printf("%sdispatcher %s>>   Switching context for thread %d...\n",\
+			 C_BGRN, C_RESET, thread->global_tid);
+			 
+	if (thread->context != NULL)
+		current_pcb->context = thread->context;
 
 	if (current_pcb != NULL) { // Only if all threads are busy
-		printf("%sdispatcher %s>>   Switching context for thread %d...\n",\
-			 C_BGRN, C_RESET, thread->global_tid);
 		printf("%sdispatcher %s>>   Idling process %d. Located at %p\n",\
 			 C_BGRN, C_RESET, current_pcb->pid, current_pcb);
 		current_pcb->state = PRSTAT_IDLE;

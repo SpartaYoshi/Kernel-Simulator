@@ -154,7 +154,7 @@ uint32_t alloc_page(){
 		nfsp->address += PAGE_SIZE; 
 	}
 
-	printf("%smemory     %s>>   Reserved space in memory at mem address %d.\n",
+	printf("%smemory     %s>>   Reserved space in memory at mem address 0x%08X.\n",
 		C_BWHT, C_RESET, addr);
 	return addr;
 }
@@ -218,8 +218,11 @@ void memwrite(uint32_t address, uint32_t data){
 
 
 void insert_frame(pcb_t * proc, uint32_t physadr){
-	uint32_t nPag = proc->mm.pt_entries++; // - 1
+	uint32_t nPag = proc->mm.pt_entries++;
+	printf("INSERTFR nPag = %d, physadr = %08X, ", nPag, physadr);
 	proc->mm.pgb[nPag].frame_address = physadr;
+		printf("frame address = %08X\n", proc->mm.pgb[nPag].frame_address);
+
 }
 
 
@@ -233,6 +236,7 @@ uint32_t translate(thread_t * th, uint32_t logicadr){
 	uint32_t nPag   = logicadr >> OFFSET_LEN;
 	uint32_t nFrame;
 
+	printf("TRANSLATE logicadr = %08X, nPag = %08X, ", logicadr, nPag);
 	// Check TLB cache
 	int i;
 	for (i = 0; i < TLB_CAPACITY; i++)
@@ -240,6 +244,9 @@ uint32_t translate(thread_t * th, uint32_t logicadr){
 		 && th->mmu.tlb[i].nPag == nPag){
 			nFrame = th->mmu.tlb[i].nFrame << OFFSET_LEN; // hit = immediate return
 			th->mmu.tlb[i].frequency = 7; // reset to max
+
+			printf("HIT nFrame = %08X, result = %08X\n", nFrame, nFrame | offset);
+
 
 			return nFrame | offset;
 		}
@@ -250,6 +257,8 @@ uint32_t translate(thread_t * th, uint32_t logicadr){
 	// Update TLB
 	int idx = find_tlb_slot(th);
 	update_tlb(th, idx, nPag, nFrame);
+
+				printf("MISS nFrame = %08X, result = %08X\n", nFrame, nFrame | offset);
 
 	return nFrame | offset;
 }
