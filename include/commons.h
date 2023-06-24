@@ -71,12 +71,15 @@ typedef struct {
 // Page Table Entry (PTE) (32 bytes - uint32_t)
 typedef struct {
     uint32_t frame_address : 24; // frame number
+	uint32_t reserved : 8;       // unused
+	/*
     uint32_t reserved : 1; 		 // unused
 	uint32_t perms : 3;          // protection bits: rwx
     uint32_t dirty : 1;  		 // 1 if page has been modified
 	uint32_t accessed : 1;       // 1 if page has been accessed
 	uint32_t present : 1;		 // 1 if it's present in physical memory
 	uint32_t valid : 1;          // 1 if entry is valid
+	*/
 
 } pte_t;
 
@@ -124,7 +127,6 @@ typedef struct {
 // Thread
 typedef struct {
 	int			   global_tid;
-	pthread_t      handle;
 	pcb_t*         proc;
 	pte_t*	       ptbr;
 	mmu_t	       mmu;

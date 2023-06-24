@@ -90,6 +90,7 @@ void kmachine() {
 }
 
 
+// Init machine
 void init_machine() {
 	printf("%sInitiated:%s Machine (%d %d-core CPUs)\n",\
 		 C_BCYN, C_RESET, ncpu, ncores);
@@ -130,6 +131,7 @@ void init_machine() {
 }
 
 
+/* // UNUSED FUNCTIONS
 void shutdown_machine() {
 	printf("\nShutting down machine...\n");
 
@@ -138,7 +140,6 @@ void shutdown_machine() {
 			core_t* jcore = &mach.cpu[i].core[j];
 
 			for (int k = 0; k < jcore->thread_count; k++) {
-				pthread_join(jcore->thread[k].handle, NULL);
 				free(jcore->thread[k].proc);
 			}
 		}
@@ -149,18 +150,6 @@ void shutdown_machine() {
 }
 
 
-/*
-void init_core_thread(core_t* core, thread_t* thread, void* start_routine, char* proc_name) { // UNUSED YET
-	strcpy(thread->proc_name,proc_name);
-
-	pthread_create(&thread->handle, NULL, start_routine, (void *) &core);
-	
-	printf("Initiated thread %d: %s \n", core->thread_count, proc_name);
-	core->thread_count++;
-
-}
-*/
-
 thread_t* find_thread(core_t* core, char* proc_name) {
 	thread_t* thread = NULL;
 	for (int i = 0; i < MAX_THREADS; i++)
@@ -170,7 +159,10 @@ thread_t* find_thread(core_t* core, char* proc_name) {
 		}
 	return thread;
 }
+*/
 
+
+// Get thread from tid
 thread_t* get_thread(int tid) {
 	int i = (tid / nth) / ncores; // CPU nº
 	int j = (tid / nth) % ncores; // Core nº
@@ -242,18 +234,18 @@ void execute(thread_t * th){
 	// Fetch instruction
 	uint32_t iadr = translate(th, *pc); 
 	*ri = memread(iadr);
-
-	printf("%smachine    %s>>   Executing process %3d (@ th %2d). Instruction: %08X     "\
-		"--- PC at 0x%08x (mem at 0x%08x)\n",\
-		C_BMAG, C_RESET, th->proc->pid, th->global_tid, *ri, *pc, iadr); 
-
 	*pc += 4;
 
-	
+
+	printf("%smachine    %s>>   Executing process %3d (@ th %2d). Instruction: %08X  >> ",\
+		C_BMAG, C_RESET, th->proc->pid, th->global_tid, *ri); 
+
 
 	// Interpret
 	uint32_t cmd, rd, rs, rf1, rf2, addr;
 	cmd = (*ri & 0xF0000000) >> 28;  // C-------
+
+	char args[32], values[16];
 
 	switch(cmd){
 		// ld   rd,addr
@@ -262,6 +254,12 @@ void execute(thread_t * th){
 			addr = (*ri & 0x00FFFFFF);
 
 			rf[rd] = memread(translate(th, addr));
+
+			sprintf(args, "r%d, 0x%08x", rd, addr);
+			sprintf(values, "[%d]", rf[rd]);
+
+			printf("ld     %-16s%-16s",  args, values);
+
 		break;
 
 
@@ -271,6 +269,11 @@ void execute(thread_t * th){
 			addr = (*ri & 0x00FFFFFF);
 
 			memwrite(translate(th, addr), rf[rs]);
+
+			sprintf(args, "r%d, 0x%08x", rs, addr);
+			sprintf(values, "[%d]", rf[rs]);
+
+			printf("st     %-16s%-16s",  args, values);
 		break;
 
 		
@@ -281,6 +284,11 @@ void execute(thread_t * th){
 			rf2 = (*ri & 0x000F0000) >> 16;
 
 			rf[rd] = rf[rf1] + rf[rf2];
+
+			sprintf(args, "r%d, r%d, r%d", rd, rf1, rf2);
+			sprintf(values, "[%d + %d]", rf[rf1], rf[rf2]);
+
+			printf("add    %-16s%-16s",  args, values);
 		break;
 
 
@@ -291,6 +299,11 @@ void execute(thread_t * th){
 			rf2 = (*ri & 0x000F0000) >> 16;
 
 			rf[rd] = rf[rf1] - rf[rf2];
+
+			sprintf(args, "r%d, r%d, r%d", rd, rf1, rf2);
+			sprintf(values, "[%d - %d]", rf[rf1], rf[rf2]);
+
+			printf("sub    %-16s%-16s",  args, values);
 		break;
 
 
@@ -301,6 +314,11 @@ void execute(thread_t * th){
 			rf2 = (*ri & 0x000F0000) >> 16;
 
 			rf[rd] = rf[rf1] * rf[rf2];
+
+			sprintf(args, "r%d, r%d, r%d", rd, rf1, rf2);
+			sprintf(values, "[%d * %d]", rf[rf1], rf[rf2]);
+
+			printf("mul    %-16s%-16s",  args, values);
 		break;
 
 
@@ -311,6 +329,11 @@ void execute(thread_t * th){
 			rf2 = (*ri & 0x000F0000) >> 16;
 
 			rf[rd] = rf[rf1] / rf[rf2];
+
+			sprintf(args, "r%d, r%d, r%d", rd, rf1, rf2);
+			sprintf(values, "[%d / %d]", rf[rf1], rf[rf2]);
+
+			printf("div    %-16s%-16s",  args, values);
 		break;
 
 		
@@ -321,6 +344,11 @@ void execute(thread_t * th){
 			rf2 = (*ri & 0x000F0000) >> 16;
 
 			rf[rd] = rf[rf1] & rf[rf2];
+
+			sprintf(args, "r%d, r%d, r%d", rd, rf1, rf2);
+			sprintf(values, "[%d & %d]", rf[rf1], rf[rf2]);
+
+			printf("and    %-16s%-16s",  args, values);
 		break;
 
 
@@ -331,6 +359,11 @@ void execute(thread_t * th){
 			rf2 = (*ri & 0x000F0000) >> 16;
 
 			rf[rd] = rf[rf1] | rf[rf2];
+
+			sprintf(args, "r%d, r%d, r%d", rd, rf1, rf2);
+			sprintf(values, "[%d | %d]", rf[rf1], rf[rf2]);
+
+			printf("or     %-16s%-16s",  args, values);
 		break;
 
 		
@@ -341,6 +374,11 @@ void execute(thread_t * th){
 			rf2 = (*ri & 0x000F0000) >> 16;
 
 			rf[rd] = rf[rf1] ^ rf[rf2];
+
+			sprintf(args, "r%d, r%d, r%d", rd, rf1, rf2);
+			sprintf(values, "[%d ^ %d]", rf[rf1], rf[rf2]);
+
+			printf("xor    %-16s%-16s",  args, values);
 		break;
 
 
@@ -350,6 +388,11 @@ void execute(thread_t * th){
 			rs = (*ri & 0x00F00000) >> 20;
 			
 			rf[rd] = rf[rs];
+
+			sprintf(args, "r%d, r%d", rd, rs);
+			sprintf(values, "[%d]", rf[rd]);
+
+			printf("mov    %-16s%-16s",  args, values);
 		break;
 
 
@@ -359,6 +402,11 @@ void execute(thread_t * th){
 			rf2 = (*ri & 0x00F00000) >> 20;
 			
 			*cc = rf[rf1] - rf[rf2];
+
+			sprintf(args, "r%d, r%d", rf1, rf2);
+			sprintf(values, "[%d, %d]", rf[rf1], rf[rf2]);
+
+			printf("cmp    %-16s%-16s",  args, values);
 		break;
 
 
@@ -367,6 +415,11 @@ void execute(thread_t * th){
 			addr = (*ri & 0x00FFFFFF);
 			
 			*pc = addr;
+
+			sprintf(args, "0x%08x", addr);
+			sprintf(values, " ");
+
+			printf("b      %-16s%-16s",  args, values);
 		break;
 
 
@@ -375,6 +428,11 @@ void execute(thread_t * th){
 			addr = (*ri & 0x00FFFFFF);
 			
 			if(cc == 0)  *pc = addr;
+
+			sprintf(args, "0x%08x", addr);
+			sprintf(values, " ");
+
+			printf("beq    %-16s%-16s",  args, values);
 		break;
 
 
@@ -383,6 +441,11 @@ void execute(thread_t * th){
 			addr = (*ri & 0x00FFFFFF);
 			
 			if (cc > 0)  *pc = addr;
+
+			sprintf(args, "0x%08x", addr);
+			sprintf(values, " ");
+
+			printf("bgt    %-16s%-16s",  args, values);
 		break;
 
 
@@ -391,6 +454,11 @@ void execute(thread_t * th){
 			addr = (*ri & 0x00FFFFFF);
 			
 			if (cc < 0)  *pc = addr;
+
+			sprintf(args, "0x%08x", addr);
+			sprintf(values, " ");
+
+			printf("blt    %-16s%-16s",  args, values);
 		break;
 
 
@@ -405,9 +473,15 @@ void execute(thread_t * th){
 			for (int i = 0; i < TLB_CAPACITY; i++)
 				if (th->proc->pid == th->mmu.tlb[i].pid)
 					th->mmu.tlb[i].valid = 0;
+
+			sprintf(args, " ");
+			sprintf(values, " ");
+
+			printf("exit   %-16s%-16s",  args, values);
 		break;
 		
 	}
 	
+	printf("--- PC at 0x%08x (mem at 0x%08x)\n", *pc-4, iadr); 
 
 }

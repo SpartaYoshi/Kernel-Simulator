@@ -94,6 +94,7 @@ int main(int argc, char *argv[]) {
 		scanf("%d", &policy);
 	}
 
+	/*
 	printf("%sIndicate process mode. %s(0 = Loader, 1 = Process generation): %s",\
 		 C_BYEL, C_YEL, C_RESET);
 	scanf("%d", &p_mode);
@@ -102,6 +103,7 @@ int main(int argc, char *argv[]) {
 			 C_BRED, C_RESET, C_BWHT, C_RESET);
 		scanf("%d", &p_mode);
 	}
+	*/
 
 
 	// Mutex and conditionals initialization
@@ -113,6 +115,7 @@ int main(int argc, char *argv[]) {
 	pthread_cond_init(&tickwork_cnd, NULL);
 	pthread_cond_init(&pending_cnd, NULL);
 
+	/*
 	switch(p_mode){
 		case MOD_LOADER:
 			pthread_mutex_init(&loader_mtx, NULL);
@@ -131,16 +134,23 @@ int main(int argc, char *argv[]) {
 
 		default: break;
 	}
+	*/
 
+	pthread_mutex_init(&loader_mtx, NULL);
+	pthread_cond_init(&loader_run_cnd, NULL);
+	pthread_cond_init(&loader_exit_cnd, NULL);
+	pthread_mutex_init(&machine_mtx, NULL);
+	pthread_cond_init(&machine_run_cnd, NULL);
+	pthread_cond_init(&machine_exit_cnd, NULL);
 
 	// Hardware initialization
 	pthread_t clock_o;
 	pthread_t timer_sched_o;
 	pthread_t timer_machine_o;
-	pthread_t timer_procgen_o;
+	//pthread_t timer_procgen_o;
 	pthread_t timer_loader_o;
 	pthread_t sched_o;
-	pthread_t procgen_o;
+	//pthread_t procgen_o;
 	pthread_t loader_o;
 	pthread_t machine_o;
 
@@ -148,7 +158,7 @@ int main(int argc, char *argv[]) {
 	pthread_create(&timer_sched_o, NULL, (void *) timer_sched, NULL);
 	pthread_create(&sched_o, NULL, (void *) ksched_disp, NULL);
 
-
+	/*
 	switch(p_mode){
 		case MOD_LOADER:
 			pthread_create(&timer_loader_o, NULL, (void *) timer_loader,\
@@ -173,6 +183,14 @@ int main(int argc, char *argv[]) {
 
 		default: break;
 	}
+	*/
+
+	pthread_create(&timer_loader_o, NULL, (void *) timer_loader, NULL);
+	pthread_create(&loader_o, NULL, (void *) kloader, NULL);	
+	pthread_create(&timer_machine_o, NULL, (void *) timer_machine, NULL);
+	pthread_create(&machine_o, NULL, (void *) kmachine, NULL);
+
+	NTIMERS = 3;
 
 	// Kernel simulation.
 	if (MOD_LOADER) while(!mach_init); // Wait for machine to fully initialize
@@ -197,6 +215,7 @@ int main(int argc, char *argv[]) {
 		fflush(stdout);
 	};
 	
+	// STOP SIMULATION WITH CTRL+C
 	
 	/**
 	while (1) {
@@ -211,21 +230,32 @@ int main(int argc, char *argv[]) {
 	shutdown_machine();
 	pthread_join(clock_o, NULL);
 	pthread_join(timer_sched_o, NULL);
-	pthread_join(timer_procgen_o, NULL);
+	//pthread_join(timer_procgen_o, NULL);
+	pthread_join(timer_machine_o, NULL);
+	pthread_join(timer_loader_o, NULL);
 	pthread_join(sched_o, NULL);
-	pthread_join(procgen_o, NULL);
+	//pthread_join(procgen_o, NULL);
+	pthread_join(machine_o, NULL);
+	pthread_join(loader_o, NULL);
 
 
 	// Mutex and conditionals cleanup
 	pthread_mutex_destroy(&clock_mtx);
 	pthread_mutex_destroy(&sched_mtx);
-	pthread_mutex_destroy(&procgen_mtx);
+	//pthread_mutex_destroy(&procgen_mtx);
+	pthread_mutex_destroy(&loader_mtx);
+	pthread_mutex_destroy(&machine_mtx);
+
 	pthread_cond_destroy(&tickwork_cnd);
 	pthread_cond_destroy(&pending_cnd);
 	pthread_cond_destroy(&sched_run_cnd);
 	pthread_cond_destroy(&sched_exit_cnd);
-	pthread_cond_destroy(&procgen_run_cnd);
-	pthread_cond_destroy(&procgen_exit_cnd);
+	//pthread_cond_destroy(&procgen_run_cnd);
+	//pthread_cond_destroy(&procgen_exit_cnd);
+	pthread_cond_destroy(&loader_run_cnd);
+	pthread_cond_destroy(&loader_exit_cnd);
+	pthread_cond_destroy(&machine_run_cnd);
+	pthread_cond_destroy(&machine_exit_cnd);
 
 	**/
 	exit(0);
