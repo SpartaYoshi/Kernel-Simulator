@@ -255,7 +255,7 @@ void execute(thread_t * th){
 
 			rf[rd] = memread(translate(th, addr));
 
-			sprintf(args, "r%d, 0x%08x", rd, addr);
+			sprintf(args, "r%d, 0x%06x", rd, addr);
 			sprintf(values, "[%d]", rf[rd]);
 
 			printf("ld     %-16s%-16s",  args, values);
@@ -270,7 +270,7 @@ void execute(thread_t * th){
 
 			memwrite(translate(th, addr), rf[rs]);
 
-			sprintf(args, "r%d, 0x%08x", rs, addr);
+			sprintf(args, "r%d, 0x%06x", rs, addr);
 			sprintf(values, "[%d]", rf[rs]);
 
 			printf("st     %-16s%-16s",  args, values);
@@ -416,7 +416,7 @@ void execute(thread_t * th){
 			
 			*pc = addr;
 
-			sprintf(args, "0x%08x", addr);
+			sprintf(args, "0x%06x", addr);
 			sprintf(values, " ");
 
 			printf("b      %-16s%-16s",  args, values);
@@ -429,7 +429,7 @@ void execute(thread_t * th){
 			
 			if(cc == 0)  *pc = addr;
 
-			sprintf(args, "0x%08x", addr);
+			sprintf(args, "0x%06x", addr);
 			sprintf(values, " ");
 
 			printf("beq    %-16s%-16s",  args, values);
@@ -442,7 +442,7 @@ void execute(thread_t * th){
 			
 			if (cc > 0)  *pc = addr;
 
-			sprintf(args, "0x%08x", addr);
+			sprintf(args, "0x%06x", addr);
 			sprintf(values, " ");
 
 			printf("bgt    %-16s%-16s",  args, values);
@@ -455,7 +455,7 @@ void execute(thread_t * th){
 			
 			if (cc < 0)  *pc = addr;
 
-			sprintf(args, "0x%08x", addr);
+			sprintf(args, "0x%06x", addr);
 			sprintf(values, " ");
 
 			printf("blt    %-16s%-16s",  args, values);
@@ -482,6 +482,6 @@ void execute(thread_t * th){
 		
 	}
 	
-	printf("--- PC at 0x%08x (mem at 0x%08x)\n", *pc-4, iadr); 
+	printf("--- PC at 0x%06x (mem at 0x%06x)\n", *pc-4, iadr); 
 
 }

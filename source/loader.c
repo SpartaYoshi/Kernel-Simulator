@@ -63,6 +63,17 @@ void kloader() {
 	while(1) {
 		pthread_cond_wait(&loader_run_cnd, &loader_mtx);
 
+		// Terminate finished processes
+		while (!is_empty(&finished_queue)){
+			pcb_t * p = dequeue(&finished_queue);
+
+			printf("%sloader     %s>>   Terminating process %d...\n",
+					C_BYEL, C_RESET, p->pid);
+
+			terminate_program(p);
+			free_process(p);
+		}
+		
 		// Create a new process if max capacity can handle
 		if (pcbs_existing < (nth * ncores * ncpu) + QUEUE_CAPACITY && \
 		    idle_queue.size < QUEUE_CAPACITY) {
@@ -98,17 +109,6 @@ void kloader() {
 			printf("%sloader     %s>>   Process %d successfully generated. Located at %p\n",
 					C_BYEL, C_RESET, block->pid, block);
 			
-		}
-
-		// Terminate finished processes
-		while (!is_empty(&finished_queue)){
-			pcb_t * p = dequeue(&finished_queue);
-
-			printf("%sloader     %s>>   Terminating process %d...\n",
-					C_BYEL, C_RESET, p->pid);
-
-			terminate_program(p);
-			free_process(p);
 		}
 		
 		pthread_cond_signal(&loader_exit_cnd);

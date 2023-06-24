@@ -154,7 +154,7 @@ uint32_t alloc_page(){
 		nfsp->address += PAGE_SIZE; 
 	}
 
-	printf("%smemory     %s>>   Reserved space in memory at mem address 0x%08x.\n",
+	printf("%smemory     %s>>   Reserved space in memory at mem address 0x%06x.\n",
 		C_BWHT, C_RESET, addr);
 	return addr;
 }
@@ -162,7 +162,7 @@ uint32_t alloc_page(){
 
 // Free page from memory
 void free_page(uint32_t pg_adr) {
-	printf("%smemory     %s>>   Freeing space in memory at mem address 0x%08x...\n",
+	printf("%smemory     %s>>   Freeing space in memory at mem address 0x%06x...\n",
 		C_BWHT, C_RESET, pg_adr);
 		
 	nfsp_t * nfsp = free_space;
