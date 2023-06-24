@@ -154,7 +154,7 @@ uint32_t alloc_page(){
 		nfsp->address += PAGE_SIZE; 
 	}
 
-	printf("%smemory     %s>>   Reserved space in memory at mem address 0x%08X.\n",
+	printf("%smemory     %s>>   Reserved space in memory at mem address 0x%08x.\n",
 		C_BWHT, C_RESET, addr);
 	return addr;
 }
@@ -162,7 +162,7 @@ uint32_t alloc_page(){
 
 // Free page from memory
 void free_page(uint32_t pg_adr) {
-	printf("%smemory     %s>>   Freeing space in memory at mem address %d...\n",
+	printf("%smemory     %s>>   Freeing space in memory at mem address 0x%08x...\n",
 		C_BWHT, C_RESET, pg_adr);
 		
 	nfsp_t * nfsp = free_space;
@@ -219,10 +219,7 @@ void memwrite(uint32_t address, uint32_t data){
 
 void insert_frame(pcb_t * proc, uint32_t physadr){
 	uint32_t nPag = proc->mm.pt_entries++;
-	printf("INSERTFR nPag = %d, physadr = %08X, ", nPag, physadr);
 	proc->mm.pgb[nPag].frame_address = physadr;
-		printf("frame address = %08X\n", proc->mm.pgb[nPag].frame_address);
-
 }
 
 
@@ -233,35 +230,31 @@ uint32_t get_frame(pcb_t * proc, uint32_t nPag){
 
 uint32_t translate(thread_t * th, uint32_t logicadr){
 	uint32_t offset = logicadr & OFFSET_MASK;
-	uint32_t nPag   = logicadr >> OFFSET_LEN;
+	uint32_t nPag   = logicadr & FRAME_MASK;
 	uint32_t nFrame;
 
-	printf("TRANSLATE logicadr = %08X, nPag = %08X, ", logicadr, nPag);
 	// Check TLB cache
 	int i;
 	for (i = 0; i < TLB_CAPACITY; i++)
-		if (th->proc->pid == th->mmu.tlb[i].pid  \
-		 && th->mmu.tlb[i].nPag == nPag){
-			nFrame = th->mmu.tlb[i].nFrame << OFFSET_LEN; // hit = immediate return
-			th->mmu.tlb[i].frequency = 7; // reset to max
-
-			printf("HIT nFrame = %08X, result = %08X\n", nFrame, nFrame | offset);
-
+		if (th->proc->pid == th->mmu.tlb[i].pid
+		 && th->mmu.tlb[i].nPag == nPag
+		 && th->mmu.tlb[i].valid){ 
+			nFrame = th->mmu.tlb[i].nFrame; // hit = immediate return
+			th->mmu.tlb[i].frequency = 7;   // reset to max
 
 			return nFrame | offset;
 		}
 
 	// Miss. Consult memory
-	nFrame = get_frame(th->proc, nPag) << OFFSET_LEN;
+	nFrame = get_frame(th->proc, nPag);
 	
 	// Update TLB
 	int idx = find_tlb_slot(th);
 	update_tlb(th, idx, nPag, nFrame);
 
-				printf("MISS nFrame = %08X, result = %08X\n", nFrame, nFrame | offset);
-
 	return nFrame | offset;
 }
+
 
 int find_tlb_slot(thread_t * th){
 	int i;

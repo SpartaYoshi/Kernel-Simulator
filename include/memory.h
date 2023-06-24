@@ -7,8 +7,8 @@
 #define KERNEL_LIMIT 0x400000
 #define PAGE_TABLE_SIZE 16
 #define PAGE_SIZE 4096 // 4KB pages - 4096 pages
-#define OFFSET_LEN 12 
-#define OFFSET_MASK 0xFFF
+#define FRAME_MASK  0xFFFFF000
+#define OFFSET_MASK 0x00000FFF
 
 void init_memory();
 void create_page_table(pcb_t * proc);

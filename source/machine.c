@@ -115,6 +115,10 @@ void init_machine() {
 				jcore.thread[k].context = NULL;
 				jcore.thread[k].ptbr = NULL;
 				jcore.thread[k].global_tid = gtid++;
+
+				for (int t = 0; t < TLB_CAPACITY; t++)
+					jcore.thread[k].mmu.tlb[t].valid = 0; // invalidate entire TLB to mark as empty
+
 			}
 			icpu.core[j] = jcore;
 		}
@@ -238,10 +242,14 @@ void execute(thread_t * th){
 	// Fetch instruction
 	uint32_t iadr = translate(th, *pc); 
 	*ri = memread(iadr);
+
+	printf("%smachine    %s>>   Executing process %d. Instruction: %08X     "\
+		"--- PC at 0x%08x (mem at 0x%08x)\n",\
+		C_BMAG, C_RESET, th->proc->pid, *ri, *pc, iadr); 
+
 	*pc += 4;
 
-	printf("%smachine    %s>>   Executing process %d. Instruction: %08X\n",\
-		 C_BMAG, C_RESET, th->proc->pid, *ri); 
+	
 
 	// Interpret
 	uint32_t cmd, rd, rs, rf1, rf2, addr;
