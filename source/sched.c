@@ -43,8 +43,6 @@ void timer_sched() {
 
 		stacked_th = false;
 
-		printf("TIMER SCHED\n");
-
 		// If all threads are busy, tick quantums and compile timed out processes
 		if (tid >= (nth * ncores * ncpu)) {
 			if (!thstack.size)
@@ -108,9 +106,9 @@ void ksched_disp() {
 		else if (thread_selected) {
 			current_pcb = thread_selected->proc;
 			// REPLACEMENT = schedule() // done below
-			printf("%sscheduler  %s>>   Process %d has timed out in thread %d.\
-				 Located at %p\n",\
-				 C_BBLU, C_RESET, current_pcb->pid, thread_selected->global_tid, current_pcb);
+			printf("%sscheduler  %s>>   Process %d has timed out in thread %d. "\
+				"Located at %p\n",\
+				C_BBLU, C_RESET, current_pcb->pid, thread_selected->global_tid, current_pcb);
 		}
 
 		// Else then compilation found no threads available. Cancel scheduling.
@@ -159,11 +157,12 @@ void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 	// Save context of current process and stop it
 	printf("%sdispatcher %s>>   Switching context for thread %d...\n",\
 			 C_BGRN, C_RESET, thread->global_tid);
-			 
-	if (thread->context != NULL)
-		current_pcb->context = thread->context;
 
-	if (current_pcb != NULL) { // Only if all threads are busy
+	if (current_pcb != NULL && current_pcb->state != PRSTAT_NULL) { 
+		// (Only if there is a process running and is not the null process)
+		if (thread->context != NULL)
+			current_pcb->context = thread->context;
+
 		printf("%sdispatcher %s>>   Idling process %d. Located at %p\n",\
 			 C_BGRN, C_RESET, current_pcb->pid, current_pcb);
 		current_pcb->state = PRSTAT_IDLE;
@@ -175,6 +174,7 @@ void dispatch(thread_t* thread, pcb_t* current_pcb, pcb_t* replacement_pcb) {
 
 	// Replace pointer to process
 	thread->proc = replacement_pcb;
+
 	// Load context of replacement process and run it
 	thread->context = replacement_pcb->context;
 	thread->ptbr = replacement_pcb->mm.pgb;

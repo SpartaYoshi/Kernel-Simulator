@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Kernel simulation.
-	while(!mach_init); // Wait for machine to fully initialize
+	if (MOD_LOADER) while(!mach_init); // Wait for machine to fully initialize
 	sleep(3); // To force print after thread init
 
 	printf("\n%sThe kernel has been successfully initialized. Press %sSPACE%s to start!%s\n",\
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
 	while (getch() != KEY_SPC);
 
 	printf("\n%sStarting...%s\n", C_BHRED, C_RESET);
-	printf("%sPress CTRL+C to quit.%s\n",\
+	printf("%sPress CTRL+C to quit. If it freezes or doesn't respond, restart the program.%s\n",\
 		 C_WHT, C_RESET);
 	sleep(2); // Time for user to read
 

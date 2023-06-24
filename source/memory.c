@@ -38,15 +38,15 @@ void init_memory() {
 
 
 // Create free slot node on list of empty spaces
-void create_nfs_node(nfsp_t * prev, uint32_t address, uint32_t length){
+void create_nfs_node(nfsp_t * prev, nfsp_t * next, uint32_t address, uint32_t length){
 	nfsp_t * new_fs = (nfsp_t *) malloc(sizeof(nfsp_t));
 
 	// Link to chain
-	new_fs->next = prev->next;
+	new_fs->next = next;
 	new_fs->prev = prev;
 
-	prev->next = new_fs;
-	new_fs->next->prev = new_fs;
+	if (prev != NULL) prev->next = new_fs;
+	if (next != NULL) next->prev = new_fs;
 
 	// Copy info
 	new_fs->address = address;
@@ -109,7 +109,7 @@ void delete_page_table(pcb_t * proc) {
 
 	// Check if it can be an extension of an existing nfs
 	// If merges with previous slot
-	if (prev->address + prev->length == pt_adr){
+	if (prev != NULL && (prev->address + prev->length) == pt_adr){
 		prev->length += PAGE_TABLE_SIZE * sizeof(pte_t); // Increase size
 		extended_prev = 1;
 	}
@@ -128,7 +128,7 @@ void delete_page_table(pcb_t * proc) {
 
 	// If not an extension, create new node
 	if (extended_prev || extended_next) return;
-	create_nfs_node(prev, pt_adr, PAGE_TABLE_SIZE * sizeof(pte_t));
+	create_nfs_node(prev, nfsp, pt_adr, PAGE_TABLE_SIZE * sizeof(pte_t));
 }
 
 
@@ -176,7 +176,7 @@ void free_page(uint32_t pg_adr) {
 
 	// Check if it can be an extension of an existing nfs
 	// If merges with previous slot
-	if (prev->address + prev->length == pg_adr){
+	if (prev != NULL && (prev->address + prev->length) == pg_adr){
 		prev->length += PAGE_SIZE; // Increase size
 		extended_prev = 1;
 	}
@@ -195,7 +195,7 @@ void free_page(uint32_t pg_adr) {
 
 	// If not an extension, create new node
 	if (extended_prev || extended_next) return;
-	create_nfs_node(prev, pg_adr, PAGE_SIZE);
+	create_nfs_node(prev, nfsp, pg_adr, PAGE_SIZE);
 }
 
 

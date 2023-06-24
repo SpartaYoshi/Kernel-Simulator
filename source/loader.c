@@ -16,7 +16,8 @@ pthread_cond_t loader_run_cnd;
 pthread_cond_t loader_exit_cnd;
 
 pcb_t* head_l;
-int pcbs_generated_l = 0;
+uint16_t pcbs_generated_l = 0;
+uint16_t pcbs_existing = 0;
 int elfi = 0;
 
 // Timer for loader
@@ -39,8 +40,6 @@ void timer_loader() {
 											// it takes longer or shorter time
 			current_tick++;
 		current_tick = 0;
-				printf("TIMER LOADER\n");
-
 
 		// Run loader...
 		pthread_cond_signal(&loader_run_cnd);
@@ -63,9 +62,9 @@ void kloader() {
 
 	while(1) {
 		pthread_cond_wait(&loader_run_cnd, &loader_mtx);
-		
+
 		// Create a new process if max capacity can handle
-		if (pcbs_generated_l < (nth * ncores * ncpu) + QUEUE_CAPACITY && \
+		if (pcbs_existing < (nth * ncores * ncpu) + QUEUE_CAPACITY && \
 		    idle_queue.size < QUEUE_CAPACITY) {
 			printf("%sloader     %s>>   Generating process %d...\n",\
 				 C_BYEL, C_RESET, pcbs_generated_l + 1);
@@ -129,6 +128,9 @@ pcb_t * create_process(){
 	// Link to dynamic list of processes
 	block->next = head_l;
 	head_l = block;
+
+	pcbs_existing++;
+
 	return block;
 }
 
@@ -151,6 +153,8 @@ void free_process(pcb_t * proc){
 	// Free
 	free(i->context);
 	free(i);
+
+	pcbs_existing--;
 }
 
 

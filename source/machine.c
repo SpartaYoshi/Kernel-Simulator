@@ -42,8 +42,6 @@ void timer_machine() {
 			current_tick++;
 		current_tick = 0;
 
-						printf("TIMER MACHINE\n");
-
 		// Run machine...
 		pthread_cond_signal(&machine_run_cnd);
 			// Here, the machine takes action and the timer waits for it to finish
@@ -220,7 +218,9 @@ void quantum_compiler() {
 				if (!process_block)
 					continue;
 
-				if (process_block->state == PRSTAT_RUNNING && process_block->quantum == 0) {
+				if ((process_block->state == PRSTAT_RUNNING && process_block->quantum == 0)
+				  || process_block->state == PRSTAT_NULL){
+			
 					push(thstack.sp, &jcore->thread[k]);
 					thstack.size++;
 				}
@@ -243,9 +243,9 @@ void execute(thread_t * th){
 	uint32_t iadr = translate(th, *pc); 
 	*ri = memread(iadr);
 
-	printf("%smachine    %s>>   Executing process %d. Instruction: %08X     "\
+	printf("%smachine    %s>>   Executing process %3d (@ th %2d). Instruction: %08X     "\
 		"--- PC at 0x%08x (mem at 0x%08x)\n",\
-		C_BMAG, C_RESET, th->proc->pid, *ri, *pc, iadr); 
+		C_BMAG, C_RESET, th->proc->pid, th->global_tid, *ri, *pc, iadr); 
 
 	*pc += 4;
 
@@ -398,6 +398,8 @@ void execute(thread_t * th){
 		case 0xF:      // C-------
 			th->proc->state = PRSTAT_FINISHED;
 			enqueue(&finished_queue, th->proc);
+
+			th->proc = &nullp; // replace with null process
 
 			// Free own TLB cache entries if any (needs thread for this)
 			for (int i = 0; i < TLB_CAPACITY; i++)

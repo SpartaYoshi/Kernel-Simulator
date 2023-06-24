@@ -107,7 +107,7 @@ typedef struct {
 // Process Control Block (PCB)
 typedef struct _pcb { 
 	struct _pcb *  next;
-	pid_t          pid;
+	uint16_t       pid;
 	int            state;
 	int            priority;
 	uint16_t	   quantum;
